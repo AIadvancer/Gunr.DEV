@@ -1,14 +1,14 @@
 /* =============================================================================
  * GUNR.DEV — boot.js
- * Layer -1: GUNR//OS power-on self test, "press any key", then a CRT power-on
- * transition into the page.
+ * The loader: a 000 -> 100 counter while "loading weights", then the digits
+ * collapse, a curtain wipes up and the particle field bursts outward.
  *
  * window.GUNR_BOOT = { done: boolean, skip() }
- * Fires `gunr:boot-opening` on document as the shutters start to part (the
- * page should begin its entrance then), and `gunr:boot-done` once the page is
- * interactive.
+ * Fires on document:
+ *   gunr:boot-opening  as the curtain starts to lift (start the hero entrance)
+ *   gunr:boot-done     once the overlay is gone and the page is interactive
  * Skipped entirely (done === true synchronously) when <html> has .no-boot,
- * which the inline head script sets for repeat visits and reduced motion.
+ * which the head script sets for repeat visits and reduced motion.
  * ========================================================================== */
 (function () {
   "use strict";
@@ -19,6 +19,8 @@
   var app = doc.getElementById("app");
   var api = { done: false, skip: function () {} };
   window.GUNR_BOOT = api;
+
+  var motion = window.GUNR_MOTION ? !!window.GUNR_MOTION.full : true;
 
   function markSeen() {
     try { sessionStorage.setItem("gunr.booted", "1"); } catch (e) { /* private mode */ }
@@ -31,265 +33,155 @@
     doc.dispatchEvent(ev);
   }
 
-  function netResume() {
-    if (window.GUNR_NET) { try { window.GUNR_NET.resume(); } catch (e) { /* noop */ } }
+  function scene(fn) {
+    var S = window.GUNR_SCENE;
+    if (S && S.ready) { try { fn(S); } catch (e) { /* decorative only */ } }
+  }
+
+  var opened = false;
+  function open() {
+    if (opened) return;
+    opened = true;
+    emit("gunr:boot-opening");
+    scene(function (S) { S.resume && S.resume(); S.burst && S.burst(); });
   }
 
   function finish() {
     if (api.done) return;
     api.done = true;
     markSeen();
-    root.classList.add("is-booted");
     root.classList.add("no-boot");
+    root.classList.remove("is-booting");
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
     if (app) { app.removeAttribute("inert"); app.removeAttribute("aria-hidden"); }
-    netResume(); // idempotent; covers the early-return path
+    open();
     emit("gunr:boot-done");
   }
 
-  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!overlay || root.classList.contains("no-boot") || reduced) {
+  if (!overlay || root.classList.contains("no-boot") || !motion) {
     finish();
     return;
   }
 
-  /* ---- Boot is running ------------------------------------------------------ */
+  /* ---- Loader is running --------------------------------------------------- */
   var P = window.PROFILE || {};
-  var U = window.GUNR_UTIL || { isSet: function (v) { return !!v; }, fullName: function () { return ""; } };
-  var log = doc.getElementById("boot-log");
-  var prompt = doc.getElementById("boot-prompt");
-  var promptText = doc.getElementById("boot-prompt-text");
+  var U = window.GUNR_UTIL || { fullName: function () { return ""; } };
+  var gsap = window.gsap;
+  var digits = Array.prototype.slice.call(overlay.querySelectorAll(".boot-digit i"));
+  var bar = doc.getElementById("boot-bar");
+  var file = doc.getElementById("boot-file");
   var skipBtn = doc.getElementById("boot-skip");
-  var timers = [];
   var leaving = false;
+  var raf = 0;
 
   if (app) { app.setAttribute("inert", ""); app.setAttribute("aria-hidden", "true"); }
-  // The mesh is hidden behind the opaque overlay: hold it (static frame) so it
-  // does not compete with the typing, then ignite it as the shutters open.
-  if (window.GUNR_NET) { try { window.GUNR_NET.pause(); } catch (e) { /* noop */ } }
 
-  var coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-  if (coarse && promptText) promptText.textContent = "TAP TO BEGIN FORWARD PASS";
-
-  // Weights filename derived from PROFILE, e.g. jake_patterson.safetensors
-  var weightsName = (U.fullName(P) || P.handle || "model").toLowerCase().replace(/[^a-z0-9]+/g, "_") + ".safetensors";
-  var handle = U.isSet(P.handle) ? String(P.handle).toUpperCase() : "GUNR";
-
-  // Optional emblem: only shown once it actually loads.
-  var logoSrc = P.assets && P.assets.bootLogo;
-  if (U.isSet(logoSrc)) {
-    var img = new Image();
-    img.alt = "";
-    img.decoding = "async";
-    img.className = "boot-logo-img";
-    img.onload = function () { img.classList.add("is-loaded"); overlay.classList.add("has-logo"); };
-    img.onerror = function () { if (img.parentNode) img.parentNode.removeChild(img); };
-    img.src = logoSrc;
-    var holder = overlay.querySelector(".boot-logo");
-    if (holder) holder.appendChild(img);
+  if (file) {
+    file.textContent = (U.fullName(P) || P.handle || "model").toLowerCase().replace(/[^a-z0-9]+/g, "_") + ".safetensors";
   }
 
-  /* Script: each step types a line. `count` animates a number inside it,
-     `ok` appends a status tag. Total ≈ 2.5s. */
-  var steps = [
-    { text: handle + "//OS v4.2  ·  power-on self test", cls: "hi", pause: 140 },
-    { text: "cpu0: tensor co-processor ......... ", ok: "OK", pause: 90 },
-    { text: "memory check: ", count: 24576, unit: " MB VRAM ... ", ok: "OK", pause: 110 },
-    { text: "mount /dev/brain .................. ", ok: "OK", pause: 90 },
-    { text: "loading weights: " + weightsName + " ", bar: true, pause: 120 },
-    { text: "tokenizer: bpe-50257 .............. ", ok: "OK", pause: 90 },
-    { text: "tokenizing visitor ... <visitor> -> id 1337", cls: "accent", token: true, pause: 140 },
-    { text: "forward pass armed.", cls: "hi", pause: 0 }
-  ];
-
-  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
-
-  function line(cls) {
-    var el = doc.createElement("span");
-    el.className = "boot-line" + (cls ? " " + cls : "");
-    log.appendChild(el);
-    return el;
+  /* Progress is a function of time with a couple of believable hesitations.
+     Up to 300ms already spent loading counts, so slow networks don't wait twice. */
+  var DUR = 1900;
+  var KEYS = [[0, 0], [0.22, 0.31], [0.4, 0.38], [0.62, 0.74], [0.78, 0.81], [1, 1]];
+  function shape(k) {
+    for (var i = 1; i < KEYS.length; i++) {
+      if (k <= KEYS[i][0]) {
+        var a = KEYS[i - 1], b = KEYS[i];
+        var u = (k - a[0]) / (b[0] - a[0]);
+        u = u * u * (3 - 2 * u);
+        return a[1] + (b[1] - a[1]) * u;
+      }
+    }
+    return 1;
   }
 
-  function typeInto(el, text, cps, done) {
-    var i = 0;
-    var start = performance.now();
-    (function tick(now) {
-      if (leaving) return;
-      var n = Math.min(text.length, Math.floor(((now - start) / 1000) * cps) + 1);
-      if (n !== i) { i = n; el.textContent = text.slice(0, i); }
-      if (i < text.length) requestAnimationFrame(tick);
-      else done();
-    })(start);
+  // Hold at 99 until webfonts are in, so the hero never reflows mid-reveal (max +1.2s).
+  var fontsIn = !(doc.fonts && doc.fonts.ready);
+  if (!fontsIn) doc.fonts.ready.then(function () { fontsIn = true; }, function () { fontsIn = true; });
+  var hardStop = 0;
+
+  var t0 = performance.now() - Math.min(performance.now(), 300);
+  var shown = -1;
+  function paint(n) {
+    if (n === shown) return;
+    shown = n;
+    var s = ("00" + n).slice(-3);
+    for (var i = 0; i < digits.length; i++) digits[i].textContent = s.charAt(i);
+    if (bar) bar.style.transform = "scaleX(" + (n / 100) + ")";
   }
 
-  function animateCount(el, prefix, to, suffix, ms, done) {
-    var start = performance.now();
-    (function tick(now) {
-      if (leaving) return;
-      var k = Math.min(1, (now - start) / ms);
-      el.textContent = prefix + Math.round(to * k * (2 - k)) + suffix;
-      if (k < 1) requestAnimationFrame(tick);
-      else done();
-    })(start);
-  }
-
-  function animateBar(el, prefix, ms, done) {
-    var start = performance.now();
-    var W = 16;
-    (function tick(now) {
-      if (leaving) return;
-      var k = Math.min(1, (now - start) / ms);
-      var f = Math.round(W * k);
-      el.textContent = prefix + "[" + new Array(f + 1).join("#") + new Array(W - f + 1).join(".") + "] " + Math.round(k * 100) + "%";
-      if (k < 1) requestAnimationFrame(tick);
-      else done();
-    })(start);
-  }
-
-  var TOKEN = "<visitor>";
-  function escText(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-
-  /* Wrap the visitor token so it can later fly into the hero's token pill. */
-  function markToken(el, text) {
-    var at = text.indexOf(TOKEN);
-    if (at < 0) return;
-    el.innerHTML = escText(text.slice(0, at)) + '<span id="boot-token">' + escText(TOKEN) + "</span>" +
-      escText(text.slice(at + TOKEN.length));
-  }
-
-  function addOk(el, word) {
-    var tag = doc.createElement("span");
-    tag.className = "boot-ok";
-    tag.textContent = "[ " + word + " ]";
-    el.appendChild(tag);
-  }
-
-  function run(idx) {
+  function tick(now) {
     if (leaving) return;
-    if (idx >= steps.length) { ready(); return; }
-    var s = steps[idx];
-    var el = line(s.cls);
-    var next = function () {
-      if (s.token) markToken(el, s.text);
-      if (s.ok) addOk(el, s.ok);
-      log.appendChild(doc.createTextNode("\n"));
-      later(function () { run(idx + 1); }, s.pause);
-    };
-    if (s.count) {
-      typeInto(el, s.text, 420, function () {
-        animateCount(el, s.text, s.count, s.unit || "", 380, next);
-      });
-    } else if (s.bar) {
-      typeInto(el, s.text, 420, function () { animateBar(el, s.text, 360, next); });
-    } else {
-      typeInto(el, s.text, 360, next);
+    var k = Math.min(1, (now - t0) / DUR);
+    var n = Math.floor(shape(k) * 100);
+    if (k >= 1) {
+      if (!hardStop) hardStop = now + 1200;
+      if (!fontsIn && now < hardStop) { paint(99); raf = requestAnimationFrame(tick); return; }
+      paint(100);
+      leave(false);
+      return;
     }
+    paint(Math.min(99, n));
+    raf = requestAnimationFrame(tick);
   }
 
-  function ready() {
-    overlay.classList.add("is-ready");
-    if (prompt) {
-      prompt.setAttribute("tabindex", "0");
-      try { prompt.focus({ preventScroll: true }); } catch (e) { prompt.focus(); }
-    }
-  }
-
-  /* The boot's <visitor> token flies into the hero's token pill, so the visitor
-     sees their own token enter the network. Skipped on fast exits. */
-  function flyToken(from) {
-    var hero = doc.getElementById("hero-token");
-    if (!from || !hero || !doc.body.animate) return;
-    var b = hero.getBoundingClientRect();
-    if (!b.width) return;
-    // The hero line is still mid-reveal (translated down); aim at its resting spot.
-    var lift = 0;
-    var host = hero.closest ? hero.closest("[data-reveal]") : null;
-    if (host && window.DOMMatrixReadOnly) {
-      try { lift = new DOMMatrixReadOnly(getComputedStyle(host).transform).m42 || 0; } catch (e) { lift = 0; }
-    }
-    var fly = doc.createElement("span");
-    fly.className = "token-pill token-fly";
-    fly.setAttribute("aria-hidden", "true");
-    fly.textContent = TOKEN;
-    // Start with the pill's text over the boot text (pill padding is ~10px x 2px).
-    var x0 = from.left - 10, y0 = from.top - 2;
-    fly.style.left = x0 + "px";
-    fly.style.top = y0 + "px";
-    doc.body.appendChild(fly);
-    var dx = b.left - x0, dy = b.top - lift - y0;
-    var anim = fly.animate([
-      { transform: "translate(0, 0)" },
-      { transform: "translate(" + dx + "px, " + dy + "px)" }
-    ], { duration: 560, easing: "cubic-bezier(.2, .8, .2, 1)", fill: "forwards" });
-    anim.onfinish = function () {
-      if (fly.parentNode) fly.parentNode.removeChild(fly);
-      hero.classList.add("is-landed");
-    };
-  }
-
-  /* CRT exit: screen collapses to a line, then shutters open from the seam. */
   function leave(fast) {
     if (leaving || api.done) return;
     leaving = true;
-    timers.forEach(clearTimeout);
+    cancelAnimationFrame(raf);
+    unbind();
     markSeen();
-    // Measure the boot token before the screen collapses.
-    var tokEl = fast ? null : doc.getElementById("boot-token");
-    var tokRect = tokEl ? tokEl.getBoundingClientRect() : null;
+    if (fast) paint(100);
     overlay.classList.add("is-leaving");
-    if (fast) overlay.classList.add("is-fast");
-    var t1 = fast ? 160 : 420;
-    var t2 = fast ? 360 : 720;
-    setTimeout(function () {
-      overlay.classList.add("is-opening");
-      // #app stays inert until finish(): a long press that began on the overlay
-      // must not release as a click on the hero (Call, Save Contact...).
-      root.classList.add("is-powering");
-      emit("gunr:boot-opening");
-      if (window.GUNR_NET) {
-        try { window.GUNR_NET.resume(); window.GUNR_NET.burst(12); } catch (e) { /* noop */ }
-      }
-      try { flyToken(tokRect); } catch (e) { /* decorative only */ }
-    }, t1);
-    setTimeout(function () {
-      root.classList.remove("is-powering");
-      unbind();
-      finish();
-    }, t1 + t2);
+
+    if (gsap) {
+      var tl = gsap.timeline({ onComplete: finish });
+      tl.to(digits, { yPercent: -110, duration: fast ? 0.35 : 0.6, ease: "expo.in", stagger: 0.05 })
+        .to(".boot-label, .boot-top", { autoAlpha: 0, y: -8, duration: 0.4, ease: "power3.in" }, 0)
+        .to(bar, { scaleX: 0, transformOrigin: "100% 50%", duration: 0.5, ease: "power3.inOut" }, fast ? 0.05 : 0.2)
+        .add(open, fast ? 0.3 : 0.55)
+        .fromTo(overlay, { clipPath: "inset(0% 0% 0% 0%)" },
+          { clipPath: "inset(0% 0% 100% 0%)", duration: fast ? 0.7 : 1.05, ease: "power3.inOut" }, fast ? 0.3 : 0.55);
+    } else {
+      // CSS fallback (see .boot.is-leaving / .is-lifting in style.css).
+      setTimeout(function () { overlay.classList.add("is-lifting"); open(); }, fast ? 150 : 400);
+      setTimeout(finish, fast ? 800 : 1300);
+    }
   }
   api.skip = function () { leave(true); };
 
   var IGNORE = { Tab: 1, Shift: 1, Control: 1, Alt: 1, Meta: 1, CapsLock: 1 };
   function onKey(e) {
     if (IGNORE[e.key] || e.ctrlKey || e.metaKey || e.altKey) return;
-    // Space/arrows would scroll the page underneath; swallow them.
-    e.preventDefault();
-    leave(e.key === "Escape" || !overlay.classList.contains("is-ready"));
+    if (e.key === "Enter" && e.target === skipBtn) return; // the button's own click handles it
+    e.preventDefault(); // space/arrows would scroll the page underneath
+    leave(true);
   }
   function onPointer(e) {
     if (e.button && e.button !== 0) return;
-    // The skip button handles itself via click.
-    if (skipBtn && (e.target === skipBtn || skipBtn.contains(e.target))) return;
-    leave(!overlay.classList.contains("is-ready"));
+    leave(true);
   }
   function onSkip(e) { e.preventDefault(); leave(true); }
-  function onPrompt(e) { e.preventDefault(); leave(false); }
 
   function unbind() {
     window.removeEventListener("keydown", onKey, true);
     overlay.removeEventListener("pointerdown", onPointer);
     if (skipBtn) skipBtn.removeEventListener("click", onSkip);
-    if (prompt) prompt.removeEventListener("click", onPrompt);
   }
 
   window.addEventListener("keydown", onKey, true);
   overlay.addEventListener("pointerdown", onPointer);
-  if (skipBtn) skipBtn.addEventListener("click", onSkip);
-  if (prompt) prompt.addEventListener("click", onPrompt);
+  if (skipBtn) {
+    skipBtn.addEventListener("click", onSkip);
+    try { skipBtn.focus({ preventScroll: true }); } catch (e) { /* noop */ }
+  }
 
-  // Keyboard users land on "skip intro" first.
-  try { skipBtn.focus({ preventScroll: true }); } catch (e) { /* noop */ }
+  // The scene stays parked behind the opaque overlay until the curtain lifts.
+  scene(function (S) { S.pause && S.pause(); });
+  doc.addEventListener("gunr:scene-ready", function () {
+    if (!opened) scene(function (S) { S.pause && S.pause(); });
+  }, { once: true });
 
-  later(function () { run(0); }, 180);
+  raf = requestAnimationFrame(tick);
 })();

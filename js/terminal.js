@@ -40,7 +40,9 @@
     return d ? "tel:" + d : "";
   };
 
-  var THEMES = ["green", "amber", "cyan"];
+  var THEMES = ["signal", "lime", "cyan"];
+  var THEME_ALIASES = { green: "lime", amber: "signal" }; // v1 theme names keep working
+  var THEME_COLORS = { signal: "#FF5A1F", lime: "#C8F04A", cyan: "#5CE1E6" }; // fallback if --signal is unset
   var THEME_KEY = "gunr.theme"; // shared with the index.html head script, journey.js and 404.html
   var HISTORY_MAX = 50;
 
@@ -58,7 +60,12 @@
 
   var reduceMQ = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   var fineMQ = window.matchMedia ? window.matchMedia("(pointer: fine)") : null;
-  function reduced() { return !!(reduceMQ && reduceMQ.matches); }
+  // The ?motion=full|reduced switch (window.GUNR_MOTION, set in the page head) wins over the OS setting.
+  function reduced() {
+    var M = window.GUNR_MOTION;
+    if (M && typeof M.full === "boolean") return !M.full;
+    return !!(reduceMQ && reduceMQ.matches);
+  }
 
   var el = {};             // DOM refs
   var openState = false;
@@ -214,7 +221,7 @@
       ["qr", "QR code for this site"],
       ["copy <email|url>", "copy to clipboard"],
       ["goto <layer>", "jump to a layer: input … output"],
-      ["theme <name>", THEMES.join(" | ")],
+      ["theme <name>", "accent: " + THEMES.join(" | ")],
       ["clear", "clear the screen"],
       ["exit", "close the terminal (or Esc)"]
     ];
@@ -446,28 +453,43 @@
     try { target.focus({ preventScroll: true }); } catch (e) { target.focus(); }
   }
 
+  function normTheme(name) {
+    name = String(name || "").toLowerCase();
+    return THEME_ALIASES[name] || name;
+  }
+
   function currentTheme() {
-    var t = html.getAttribute("data-theme");
-    return THEMES.indexOf(t) !== -1 ? t : "green";
+    var t = normTheme(html.getAttribute("data-theme"));
+    return THEMES.indexOf(t) !== -1 ? t : "signal";
   }
 
   function applyTheme(name, persist) {
+    name = normTheme(name);
     if (THEMES.indexOf(name) === -1) return false;
-    html.setAttribute("data-theme", name);
+    html.dataset.theme = name;
     if (persist) { try { localStorage.setItem(THEME_KEY, name); } catch (e) { /* storage blocked */ } }
+    // Recolor the WebGL particles to match, when the scene is running.
+    var scene = window.GUNR_SCENE;
+    if (scene && typeof scene.setAccent === "function") {
+      try {
+        var accent = getComputedStyle(html).getPropertyValue("--signal").trim() || THEME_COLORS[name];
+        scene.setAccent(accent);
+      } catch (e) { /* scene not ready */ }
+    }
     try { doc.dispatchEvent(new CustomEvent("gunr:themechange", { detail: { theme: name } })); } catch (e) { /* old browser */ }
     return true;
   }
 
   function cmdTheme(args) {
-    var name = (args[0] || "").toLowerCase();
-    if (!name) {
+    var raw = (args[0] || "").toLowerCase();
+    if (!raw) {
       outH("theme: " + '<span class="term-acc">' + currentTheme() + "</span> · options: " +
         THEMES.map(function (t) { return cmdButton("theme " + t, t); }).join(" "));
       return;
     }
-    if (!applyTheme(name, true)) { err("theme: unknown '" + name + "' (" + THEMES.join(" | ") + ")"); return; }
-    out("> phosphor set to " + name, "term-acc");
+    var name = normTheme(raw);
+    if (!applyTheme(name, true)) { err("theme: unknown '" + raw + "' (" + THEMES.join(" | ") + ")"); return; }
+    out("> accent set to " + name + (name !== raw ? " (" + raw + " is now " + name + ")" : ""), "term-acc");
     toast("> theme: " + name);
   }
 
@@ -982,6 +1004,7 @@
     lastFocus = doc.activeElement;
     openState = true;
     el.root.hidden = false;
+    el.root.classList.toggle("term--still", reduced()); // CSS: no cursor blink / transitions
     html.classList.add("term-open");
     setToggleState(true);
 
