@@ -1,6 +1,6 @@
 # GUNR.DEV — Forward Pass
 
-A personal networking site and digital business card for Jake Patterson (GUNR). The concept is
+A personal networking site and digital business card for Gunnar Patterson (GUNR). The concept is
 **Forward Pass**: the visitor is a token run through a neural network. After a short GUNR//OS boot
 screen, scrolling carries them through the layers of a model. It starts at **Input** (identity, with
 Save Contact / Email / Call / LinkedIn), then moves through **Embedding** (about), **Attention**
@@ -92,7 +92,7 @@ Use ↑/↓ for history and **Tab** to complete. All output comes from `js/conte
 | `cv` (`resume`) | Same as `cat resume.txt` |
 | `nvidia-smi` · `neofetch` | Fake GPU / system readout |
 | `matrix` | Digital rain (Ctrl+C stops it) |
-| `sudo hire jake` | Try it |
+| `sudo hire gunnar` | Try it |
 | `history` · `echo` · `date` · `pwd` · `cd` · `rm` · `hire` | Shell flavor |
 | `clear` (`cls`, Ctrl+L) · `exit` (`quit`, `q`, `close`) | Housekeeping |
 

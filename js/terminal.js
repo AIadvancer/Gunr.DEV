@@ -54,7 +54,7 @@
   ];
 
   var FILES = ["about.txt", "experience.log", "skills.json", "resume.txt", "contact.vcf", "research/"];
-  var CHIPS = ["help", "about", "contact", "vcard", "qr", "socials", "nvidia-smi", "sudo hire jake", "matrix", "exit"];
+  var CHIPS = ["help", "about", "contact", "vcard", "qr", "socials", "nvidia-smi", "sudo hire gunnar", "matrix", "exit"];
 
   var reduceMQ = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   var fineMQ = window.matchMedia ? window.matchMedia("(pointer: fine)") : null;
@@ -477,7 +477,7 @@
 
   function cmdSudo(args) {
     var rest = args.join(" ").toLowerCase();
-    if (!/^hire\s+(jake|gunr|jake\s+patterson|me)\b/.test(rest)) {
+    if (!/^hire\s+(gunnar|jake|gunr|gunnar\s+patterson|me)\b/.test(rest)) {
       out("guest is not in the sudoers file. This incident will be reported.", "term-err");
       out("(hint: there is exactly one thing sudo can do here.)", "term-dim");
       return;
@@ -490,7 +490,7 @@
           " " + clamp01(t.value).toFixed(2) + ' <span class="term-acc">ok</span>');
       });
     });
-    steps.push(function () { out("hire jake: permission granted.", "term-acc"); });
+    steps.push(function () { out("hire gunnar: permission granted.", "term-acc"); });
     steps.push(function () { outH('&gt; highest-probability next token: <span class="term-hl">"Let\'s connect"</span>'); });
     sequence(steps, 260, function () {
       blank();
@@ -762,7 +762,7 @@
     "theme": { run: cmdTheme, args: function () { return THEMES.slice(); } },
     "clear": { run: cmdClear },
     "exit": { run: cmdExit },
-    "sudo": { run: cmdSudo, args: function () { return ["hire jake"]; } },
+    "sudo": { run: cmdSudo, args: function () { return ["hire gunnar"]; } },
     "nvidia-smi": { run: cmdNvidiaSmi },
     "neofetch": { run: cmdNeofetch },
     "matrix": { run: cmdMatrix },
@@ -774,7 +774,7 @@
     "date": { run: function () { out(new Date().toString()); } },
     "pwd": { run: function () { out("/home/guest"); } },
     "cd": { run: function () { out("cd: this shell moves by layer — try 'goto attention'", "term-dim"); } },
-    "hire": { run: function () { err("hire: permission denied. did you mean 'sudo hire jake'?"); } }
+    "hire": { run: function () { err("hire: permission denied. did you mean 'sudo hire gunnar'?"); } }
   };
   COMMANDS.cv = { run: cmdResume };
   var ALIASES = { "?": "help", "man": "help", "cls": "clear", "quit": "exit", "q": "exit", "close": "exit", "dir": "ls", "type": "cat", "resume": "cv" };
