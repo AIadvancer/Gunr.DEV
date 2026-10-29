@@ -1,0 +1,19 @@
+{
+  "name": "GUNR // Jake Patterson",
+  "short_name": "GUNR",
+  "description": "Run the forward pass: Jake Patterson, IT Specialist and AI researcher.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#05070a",
+  "theme_color": "#05070a",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

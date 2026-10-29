@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Networking kit // GUNR.DEV</title>
+  <meta name="description" content="Printable business cards, QR stickers and a table poster for GUNR.DEV.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#05070a">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/print.css">
+
+  <!-- Classic deferred scripts (works on file:// and GitHub Pages). Order matters.
+       The QR library is async so a slow or blocked CDN never holds up the rest;
+       it announces itself with gunr:qr-ready / gunr:qr-failed on document. -->
+  <script defer src="js/content.js"></script>
+  <script defer src="js/vcard.js"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" onload="document.dispatchEvent(new Event('gunr:qr-ready'))" onerror="document.dispatchEvent(new Event('gunr:qr-failed'))"></script>
+  <script defer src="js/qr.js"></script>
+</head>
+<body>
+  <a class="skip no-print" href="#controls">Skip to controls</a>
+
+  <header class="topbar no-print">
+    <a class="topbar__back" href="index.html">&larr; back to the forward pass</a>
+    <p class="topbar__title"><span class="accent" data-fill="handle"></span>//KIT <span class="dim">print + share</span></p>
+  </header>
+
+  <div class="app">
+    <aside id="controls" class="controls no-print" aria-labelledby="kit-title">
+      <section class="panel">
+        <div class="panel__bar"><span class="dots" aria-hidden="true">&#9679; &#9679; &#9679;</span><span>kit.cfg</span></div>
+        <div class="panel__body">
+          <div>
+            <p class="kicker">Layer 05 // Output &rarr; paper</p>
+            <h1 id="kit-title" class="h1">Networking kit</h1>
+          </div>
+          <p class="lede">Business cards, QR stickers and a table poster. Every code points to the same address, so update <code>siteUrl</code> in <code>js/content.js</code> and reprint.</p>
+
+          <div id="alerts" class="alerts" role="status" aria-live="polite"></div>
+
+          <figure class="live-qr">
+            <div id="liveQr" class="live-qr__code"></div>
+            <figcaption>Points to <a id="liveUrl" href="#">&hellip;</a></figcaption>
+          </figure>
+
+          <form id="kitForm" class="form" novalidate>
+            <fieldset>
+              <legend>Layout</legend>
+              <label class="choice"><input type="radio" name="layout" value="cards-duplex" checked>
+                <span>Business cards, front + back<small>3.5 &times; 2 in, 10-up, 2 pages for duplex</small></span></label>
+              <label class="choice"><input type="radio" name="layout" value="cards-front">
+                <span>Business cards, front only<small>3.5 &times; 2 in, 10-up</small></span></label>
+              <label class="choice"><input type="radio" name="layout" value="cards-back">
+                <span>Business cards, back only<small>Columns mirrored for duplex</small></span></label>
+              <label class="choice"><input type="radio" name="layout" value="stickers">
+                <span>Stickers / badges<small>2 &times; 2 in square, 12-up</small></span></label>
+              <label class="choice"><input type="radio" name="layout" value="poster">
+                <span>Poster<small>One full-page QR for a booth or table</small></span></label>
+            </fieldset>
+
+            <fieldset>
+              <legend>Options</legend>
+              <label class="choice"><input type="checkbox" name="ink" checked>
+                <span>Ink-friendly<small>Black on white. Turn off for the dark terminal look.</small></span></label>
+              <label class="choice"><input type="checkbox" name="marks" checked>
+                <span>Crop marks<small>Faint cut guides in the page margin</small></span></label>
+            </fieldset>
+
+            <fieldset id="nudge" class="nudge">
+              <legend>Back-side alignment</legend>
+              <label class="num">Shift X (mm)<input type="number" name="nx" value="0" step="0.5" min="-6" max="6" inputmode="decimal"></label>
+              <label class="num">Shift Y (mm)<input type="number" name="ny" value="0" step="0.5" min="-6" max="6" inputmode="decimal"></label>
+              <p>Only if a test duplex print is off. Positive X moves the back right, positive Y moves it down.</p>
+            </fieldset>
+          </form>
+
+          <button id="printBtn" type="button" class="btn btn--primary btn--block">Print</button>
+
+          <div class="btn-grid" role="group" aria-label="Downloads and sharing">
+            <button id="dlSvg" type="button" class="btn">Download QR as SVG</button>
+            <button id="dlPng" type="button" class="btn">Download QR as PNG (1024px)</button>
+            <button id="dlVcf" type="button" class="btn">Save contact (.vcf)</button>
+            <button id="copyLink" type="button" class="btn">Copy link</button>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <main id="main" class="main">
+      <h2 class="sr-only">Print preview</h2>
+      <p class="sr-only">The preview below is a visual copy of what will print. All actions are in the controls.</p>
+      <div id="preview" class="preview"></div>
+
+      <section class="panel tips no-print" aria-labelledby="tips-title">
+        <div class="panel__bar"><span class="dots" aria-hidden="true">&#9679; &#9679; &#9679;</span><span>README.print</span></div>
+        <div class="panel__body">
+          <h2 id="tips-title" class="h2">Print tips</h2>
+          <div class="tips__grid">
+            <div>
+              <h3>Get the size right</h3>
+              <ul>
+                <li>Paper: US Letter. Scale: <strong>100% / "Actual size"</strong>, never "Fit to page".</li>
+                <li>Margins: <strong>None</strong> (or Default in Chrome). The sheet sets its own margins.</li>
+                <li>Dark look: tick <strong>Background graphics</strong> in the print dialog.</li>
+                <li>Duplex: flip on the <strong>long edge</strong>. Print one test sheet, hold it up to a light, then nudge the back if needed.</li>
+                <li>Stock: <strong>14pt or 16pt matte</strong> cardstock. Matte avoids glare, so codes scan better. Check your printer's max paper weight.</li>
+                <li>No heavy-stock printer? Send the <strong>SVG</strong> to a print shop. It stays sharp at any size.</li>
+                <li>Before printing a batch, test-scan with two different phones: the poster from <strong>1 m (3 ft)</strong> and a card at arm's length.</li>
+              </ul>
+            </div>
+            <div>
+              <h3>Networking in the field</h3>
+              <ul>
+                <li><strong>NFC tag on your phone case:</strong> stick an NTAG213/215 sticker on the back and write your URL to it with a free NFC writer app. Test it, then lock the tag. People can tap your phone to open the site.</li>
+                <li><strong>Lock-screen QR:</strong> set this as your wallpaper. It fits iPhone-size screens and works on most phones. Raise your phone and they can scan it, no unlocking needed.</li>
+                <li>Put a sticker on the back of your conference badge and your laptop lid.</li>
+                <li>Save your own .vcf to your phone so you can AirDrop or share it in a couple of taps.</li>
+                <li>Put the same URL in your email signature and LinkedIn header, so every channel leads to one place.</li>
+              </ul>
+              <p style="margin-top:14px"><button id="dlLock" type="button" class="btn">Download lock-screen QR (1170&times;2532 PNG)</button></p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast no-print" role="status" aria-live="polite"></div>
+
+  <noscript>
+    <p style="padding:16px;max-width:640px;margin:0 auto">The print kit builds its sheets with JavaScript. Please enable it, or open <a href="index.html">the main site</a>.</p>
+  </noscript>
+
+  <script>
+  /* card.html logic. Starts after DOMContentLoaded, when the deferred scripts
+     above (content.js, vcard.js, qr.js) have run; see start() for the async
+     QR library. */
+  (function () {
+    "use strict";
+
+    var SHEET_W = 816;   // 8.5in at 96 CSS px/in
+    var SHEET_H = 1056;  // 11in
+    var PAGE_PAD = 24;   // .page horizontal padding (12px x 2)
+    var STORE_KEY = "gunr.kit.v1";
+    var LAYOUTS = ["cards-duplex", "cards-front", "cards-back", "stickers", "poster"];
+
+    /* Cut-line positions (inches) for the crop marks. */
+    var CARD_GEOM = { xs: [0.75, 4.25, 7.75], ys: [0.5, 2.5, 4.5, 6.5, 8.5, 10.5], box: { l: 0.75, t: 0.5, r: 7.75, b: 10.5 } };
+    var STICKER_GEOM = {
+      xs: [1, 3, 3.25, 5.25, 5.5, 7.5],
+      ys: [1.125, 3.125, 3.375, 5.375, 5.625, 7.625, 7.875, 9.875],
+      box: { l: 1, t: 1.125, r: 7.5, b: 9.875 }
+    };
+
+    function $(id) { return document.getElementById(id); }
+
+    function store(get, value) {
+      try {
+        if (get) return JSON.parse(window.localStorage.getItem(STORE_KEY) || "null");
+        window.localStorage.setItem(STORE_KEY, JSON.stringify(value));
+      } catch (e) { /* storage blocked: preferences just aren't remembered */ }
+      return null;
+    }
+
+    /* "gunr.dev" or "user.github.io/Repo" (host + path, no scheme / www / trailing slash). */
+    function displayUrl(u) {
+      try {
+        var x = new URL(u);
+        return (x.host.replace(/^www\./i, "") + x.pathname).replace(/\/+$/, "");
+      } catch (e) {
+        return String(u || "").replace(/^[a-z]+:\/\//i, "").replace(/\/+$/, "");
+      }
+    }
+
+    function fmt(n) { return String(Math.round(n * 10000) / 10000); }
+
+    function marksSvg(g) {
+      var off = 0.0625, len = 0.25, d = "", b = g.box;
+      g.xs.forEach(function (x) {
+        d += "M" + fmt(x) + " " + fmt(b.t - off) + "V" + fmt(b.t - off - len);
+        d += "M" + fmt(x) + " " + fmt(b.b + off) + "V" + fmt(b.b + off + len);
+      });
+      g.ys.forEach(function (y) {
+        d += "M" + fmt(b.l - off) + " " + fmt(y) + "H" + fmt(b.l - off - len);
+        d += "M" + fmt(b.r + off) + " " + fmt(y) + "H" + fmt(b.r + off + len);
+      });
+      return '<svg class="k-marks" viewBox="0 0 8.5 11" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
+        '<path d="' + d + '" fill="none" stroke="#000" stroke-width="0.007"/></svg>';
+    }
+
+    function saveBlob(blob, filename) {
+      var a = document.createElement("a");
+      var href = URL.createObjectURL(blob);
+      if ("download" in a) {
+        a.href = href;
+        a.download = filename;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.parentNode.removeChild(a);
+      } else {
+        window.open(href, "_blank"); // old browsers: open it so it can be saved manually
+      }
+      setTimeout(function () { URL.revokeObjectURL(href); }, 5000);
+    }
+
+    function dataUrlToBlob(dataUrl) {
+      var parts = dataUrl.split(",");
+      var mime = (parts[0].match(/:(.*?);/) || [])[1] || "application/octet-stream";
+      var bin = atob(parts[1]);
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new Blob([bytes], { type: mime });
+    }
+
+    function copyText(text) {
+      function legacy() {
+        return new Promise(function (resolve, reject) {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          ta.setAttribute("readonly", "");
+          ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;";
+          document.body.appendChild(ta);
+          ta.select();
+          var ok = false;
+          try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+          document.body.removeChild(ta);
+          if (ok) { resolve(); } else { reject(new Error("copy failed")); }
+        });
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).catch(legacy);
+      }
+      return legacy();
+    }
+
+    var toastTimer = 0;
+    function toast(msg) {
+      var el = $("toast");
+      el.textContent = msg;
+      el.classList.add("is-on");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { el.classList.remove("is-on"); }, 2400);
+    }
+
+    function init() {
+      var P = window.PROFILE, U = window.GUNR_UTIL, Q = window.GUNR_QR, V = window.GUNR_VCARD;
+      var alerts = $("alerts");
+      var buttons = ["printBtn", "dlSvg", "dlPng", "dlVcf", "copyLink", "dlLock"];
+
+      if (!P || !U) {
+        alerts.innerHTML = '<div class="alert alert--error"><strong>js/content.js did not load.</strong>' +
+          "Check that the file exists and has no syntax errors. Open the browser console to see the line number.</div>";
+        buttons.forEach(function (id) { $(id).disabled = true; });
+        return;
+      }
+
+      var esc = U.esc, isSet = U.isSet;
+      var url = String(P.siteUrl || "").trim();
+      var urlSet = isSet(url);
+      var shown = urlSet ? displayUrl(url) : "";
+      var name = U.fullName(P);
+      var handle = isSet(P.handle) ? String(P.handle) : "";
+      var slug = (handle || name || "contact").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "contact";
+      var qrReady = !!(Q && Q.ready && Q.ready());
+      var QR_OPTS = { ecc: "Q", margin: 4, dark: "#000", light: "#fff", label: "QR code linking to " + shown };
+      var qrSvg = qrReady && urlSet ? Q.svg(url, QR_OPTS) : null;
+
+      var placeholder = !urlSet ||
+        !/^https?:\/\/[^\s\/?#]+\.[a-z]{2,}([\/?#:]|$)/i.test(url) ||
+        /example\.(com|org|net)|localhost|127\.0\.0\.1|your[-_ ]?(domain|site|name|user)|\.\.\./i.test(url);
+
+      /* ---- fill page chrome ---- */
+      Array.prototype.forEach.call(document.querySelectorAll('[data-fill="handle"]'), function (el) {
+        el.textContent = handle;
+      });
+      if (handle) document.title = "Networking kit // " + handle;
+
+      /* ---- alerts ---- */
+      var html = "";
+      if (placeholder) {
+        html += '<div class="alert"><strong>siteUrl looks like a placeholder.</strong>' +
+          "Every QR code on this page points to <code>" + esc(url || "(empty)") + "</code>. " +
+          "Set <code>siteUrl</code> in <code>js/content.js</code> to your live address before printing.</div>";
+      }
+      if (!qrReady) {
+        html += '<div class="alert alert--error"><strong>The QR generator did not load.</strong>' +
+          "You may be offline, or the CDN may be blocked. Connect and reload. Until then, give people this address:" +
+          '<p class="alert__url">' + esc(shown || "set siteUrl in js/content.js") + "</p></div>";
+      } else if (!qrSvg && urlSet) {
+        html += '<div class="alert alert--error"><strong>This URL could not be encoded as a QR code.</strong>' +
+          "It is probably too long. Use a shorter address in <code>siteUrl</code>." +
+          '<p class="alert__url">' + esc(shown) + "</p></div>";
+      }
+      alerts.innerHTML = html;
+
+      /* ---- live QR ---- */
+      var live = $("liveQr"), liveUrl = $("liveUrl");
+      if (qrSvg) {
+        live.innerHTML = qrSvg;
+      } else {
+        live.classList.add("is-missing");
+        live.textContent = shown || "no siteUrl";
+      }
+      liveUrl.textContent = url || "(siteUrl not set)";
+      if (/^https?:\/\//i.test(url)) { liveUrl.href = url; } else { liveUrl.removeAttribute("href"); }
+
+      /* ---- item templates (built once) ---- */
+      function qrSlot() {
+        if (qrSvg) return '<div class="k-qr">' + qrSvg + "</div>";
+        return '<div class="k-qr k-qr--missing"><span>' + esc(shown || "set siteUrl") + "</span></div>";
+      }
+
+      var kicker = esc(handle) + "//OS";
+      var contact = "";
+      if (isSet(P.email)) contact += "<li>" + esc(P.email) + "</li>";
+      if (isSet(P.phone)) contact += "<li>" + esc(P.phone) + "</li>";
+
+      var FRONT = '<div class="k-card k-front">' +
+        '<div class="k-id"><div>' +
+          '<p class="k-kicker">' + kicker + "</p>" +
+          (name ? '<p class="k-name">' + esc(name) + "</p>" : "") +
+          (isSet(P.title) ? '<p class="k-role">' + esc(P.title) + "</p>" : "") +
+          (isSet(P.company) ? '<p class="k-org">' + esc(P.company) + "</p>" : "") +
+          (isSet(P.companyNote) ? '<p class="k-note">' + esc(P.companyNote) + "</p>" : "") +
+        "</div><div>" +
+          (contact ? '<ul class="k-contact">' + contact + "</ul>" : "") +
+          '<p class="k-prompt"><span class="k-caret">&gt;</span> forward_pass --connect</p>' +
+        "</div></div>" +
+        '<div class="k-qrcol">' + qrSlot() + '<p class="k-host">' + esc(shown) + "</p></div>" +
+      "</div>";
+
+      function backCard(style) {
+        return '<div class="k-card k-back"' + style + ">" + qrSlot() +
+          '<div class="k-back__txt">' +
+            '<p class="k-kicker">Layer 00 // Input</p>' +
+            '<p class="k-cta">Scan to run the forward pass</p>' +
+            (handle ? '<p class="k-handle">' + esc(handle) + "</p>" : "") +
+            '<p class="k-host">' + esc(shown) + "</p>" +
+          "</div></div>";
+      }
+
+      var STICKER = '<div class="k-sticker">' + qrSlot() +
+        '<p class="k-sticker__label">' + esc([handle, shown].filter(Boolean).join(" · ")) + "</p></div>";
+
+      var roleLine = [P.title, P.company].filter(isSet).map(esc).join(" &middot; ");
+      var POSTER = '<div class="k-poster">' +
+        '<p class="k-kicker">' + kicker + " &middot; Layer 05 // Output</p>" +
+        (name ? '<p class="k-poster__name">' + esc(name) + "</p>" : "") +
+        (roleLine ? '<p class="k-poster__role">' + roleLine + "</p>" : "") +
+        qrSlot() +
+        '<p class="k-poster__cta">Scan to run the forward pass</p>' +
+        '<p class="k-poster__host">' + esc(shown) + "</p>" +
+      "</div>";
+
+      function repeat(s, n) { var out = ""; for (var i = 0; i < n; i++) out += s; return out; }
+
+      function frontSheet() {
+        return { cap: "Page &middot; card fronts", marks: true,
+          body: marksSvg(CARD_GEOM) + '<div class="k-grid k-grid--cards">' + repeat(FRONT, 10) + "</div>" };
+      }
+      function backSheet() {
+        // Mirror columns: on a long-edge flip, front column 1 sits behind back column 2.
+        var cards = "";
+        for (var i = 0; i < 10; i++) {
+          var row = Math.floor(i / 2) + 1, col = (i % 2) + 1;
+          cards += backCard(' style="grid-row:' + row + ";grid-column:" + (3 - col) + '" data-front-slot="' + (i + 1) + '"');
+        }
+        return { cap: "Page &middot; card backs (mirrored for duplex)", marks: false,
+          body: '<div class="k-grid k-grid--cards k-grid--back">' + cards + "</div>" };
+      }
+      function stickerSheet() {
+        return { cap: "Page &middot; stickers", marks: true,
+          body: marksSvg(STICKER_GEOM) + '<div class="k-grid k-grid--stickers">' + repeat(STICKER, 12) + "</div>" };
+      }
+      function posterSheet() {
+        return { cap: "Page &middot; poster", marks: false, body: POSTER };
+      }
+
+      /* ---- state + rendering ---- */
+      var form = $("kitForm"), preview = $("preview");
+      var saved = store(true) || {};
+      var state = {
+        layout: LAYOUTS.indexOf(saved.layout) > -1 ? saved.layout : "cards-duplex",
+        ink: true,   // ink-friendly is always the default for print
+        marks: saved.marks !== false,
+        nx: Number(saved.nx) || 0,
+        ny: Number(saved.ny) || 0
+      };
+      form.elements.layout.value = state.layout;
+      form.elements.marks.checked = state.marks;
+      form.elements.nx.value = state.nx;
+      form.elements.ny.value = state.ny;
+
+      function clampMm(v) {
+        var n = parseFloat(v);
+        if (isNaN(n)) return 0;
+        return Math.max(-6, Math.min(6, n));
+      }
+
+      function readForm() {
+        state.layout = form.elements.layout.value || "cards-duplex";
+        state.ink = form.elements.ink.checked;
+        state.marks = form.elements.marks.checked;
+        state.nx = clampMm(form.elements.nx.value);
+        state.ny = clampMm(form.elements.ny.value);
+        store(false, { layout: state.layout, marks: state.marks, nx: state.nx, ny: state.ny });
+      }
+
+      function applyNudge() {
+        preview.style.setProperty("--nudge-x", state.nx + "mm");
+        preview.style.setProperty("--nudge-y", state.ny + "mm");
+      }
+
+      function render() {
+        var sheets = [];
+        if (state.layout === "cards-duplex") sheets = [frontSheet(), backSheet()];
+        else if (state.layout === "cards-front") sheets = [frontSheet()];
+        else if (state.layout === "cards-back") sheets = [backSheet()];
+        else if (state.layout === "stickers") sheets = [stickerSheet()];
+        else sheets = [posterSheet()];
+
+        var cls = "sheet" + (state.ink ? "" : " is-dark") + (state.marks ? "" : " no-marks");
+        preview.innerHTML = sheets.map(function (s, i) {
+          return '<div class="page"><p class="page__cap no-print">' + (sheets.length > 1 ? (i + 1) + "/" + sheets.length + " " : "") +
+            s.cap + '</p><div class="sheet-frame"><div class="' + cls + '" aria-hidden="true">' + s.body + "</div></div></div>";
+        }).join("");
+
+        $("nudge").hidden = !(state.layout === "cards-duplex" || state.layout === "cards-back");
+        applyNudge();
+        fit();
+      }
+
+      /* Scale each 8.5x11in sheet to fit the preview column (and the viewport height
+         on large screens). Only a transform: the inch-based geometry is untouched. */
+      function fit() {
+        var page = preview.querySelector(".page");
+        if (!page) return;
+        var w = page.clientWidth - PAGE_PAD;
+        var s = Math.min(1, w / SHEET_W);
+        if (window.innerWidth >= 960) s = Math.min(s, Math.max(0.5, (window.innerHeight - 96) / SHEET_H));
+        s = Math.max(0.1, s);
+        Array.prototype.forEach.call(preview.querySelectorAll(".sheet-frame"), function (frame) {
+          frame.style.width = Math.floor(SHEET_W * s) + "px";
+          frame.style.height = Math.floor(SHEET_H * s) + "px";
+          frame.firstElementChild.style.transform = "scale(" + s + ")";
+        });
+      }
+
+      var fitQueued = false;
+      function queueFit() {
+        if (fitQueued) return;
+        fitQueued = true;
+        requestAnimationFrame(function () { fitQueued = false; fit(); });
+      }
+      if ("ResizeObserver" in window) new ResizeObserver(queueFit).observe(preview);
+      window.addEventListener("resize", queueFit);
+
+      form.addEventListener("submit", function (e) { e.preventDefault(); });
+      form.addEventListener("change", function () { readForm(); render(); });
+      form.addEventListener("input", function (e) {
+        if (e.target.name === "nx" || e.target.name === "ny") { readForm(); applyNudge(); }
+      });
+
+      render();
+
+      /* ---- actions ---- */
+      $("printBtn").addEventListener("click", function () {
+        if (placeholder && !window.confirm("siteUrl still looks like a placeholder, so the QR codes may not lead anywhere. Print anyway?")) return;
+        window.print();
+      });
+
+      var dlSvg = $("dlSvg"), dlPng = $("dlPng"), dlVcf = $("dlVcf"), copyBtn = $("copyLink"), dlLock = $("dlLock");
+      if (!qrSvg) { dlSvg.disabled = dlPng.disabled = dlLock.disabled = true; }
+      if (!V || !V.download) dlVcf.disabled = true;
+      if (!urlSet) copyBtn.disabled = true;
+
+      dlSvg.addEventListener("click", function () {
+        var svg = Q.svg(url, { ecc: "Q", margin: 4, dark: "#000", light: "#fff", size: 1024, label: QR_OPTS.label });
+        if (!svg) { toast("> QR unavailable"); return; }
+        saveBlob(new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + svg], { type: "image/svg+xml" }), slug + "-qr.svg");
+        toast("> saved " + slug + "-qr.svg");
+      });
+
+      dlPng.addEventListener("click", function () {
+        Q.png(url, 1024, { ecc: "Q", margin: 4, dark: "#000", light: "#fff" }).then(function (dataUrl) {
+          saveBlob(dataUrlToBlob(dataUrl), slug + "-qr-1024.png");
+          toast("> saved " + slug + "-qr-1024.png");
+        }).catch(function () { toast("> PNG export failed"); });
+      });
+
+      dlVcf.addEventListener("click", function () {
+        try {
+          V.download(P);
+          toast("> saved " + (V.filename ? V.filename(P) : "contact.vcf"));
+        } catch (e) { toast("> vCard export failed"); }
+      });
+
+      copyBtn.addEventListener("click", function () {
+        copyText(url).then(function () { toast("> copied to clipboard"); })
+          .catch(function () { toast("> copy failed: " + url); });
+      });
+
+      dlLock.addEventListener("click", function () {
+        dlLock.disabled = true;
+        drawLockscreen().then(function (canvas) {
+          var file = slug + "-lockscreen-1170x2532.png";
+          if (canvas.toBlob) {
+            canvas.toBlob(function (blob) {
+              if (blob) { saveBlob(blob, file); } else { saveBlob(dataUrlToBlob(canvas.toDataURL("image/png")), file); }
+            }, "image/png");
+          } else {
+            saveBlob(dataUrlToBlob(canvas.toDataURL("image/png")), file);
+          }
+          toast("> saved " + file);
+        }).catch(function () { toast("> wallpaper export failed"); })
+          .then(function () { dlLock.disabled = !qrSvg; });
+      });
+
+      /* ---- lock-screen wallpaper (1170 x 2532, iPhone-size portrait) ---- */
+      function drawLockscreen() {
+        var fontsReady = Promise.resolve();
+        if (document.fonts && document.fonts.load) {
+          fontsReady = Promise.all([
+            document.fonts.load('700 72px "Space Grotesk"'),
+            document.fonts.load('600 36px "JetBrains Mono"')
+          ]).catch(function () {});
+        }
+        return fontsReady.then(function () {
+          var m = Q.matrix(url, "Q");
+          if (!m) throw new Error("no QR");
+          var W = 1170, H = 2532;
+          var canvas = document.createElement("canvas");
+          canvas.width = W; canvas.height = H;
+          var ctx = canvas.getContext("2d");
+          if (!ctx) throw new Error("no canvas");
+
+          // Background: deep blue-black with a soft phosphor glow behind the panel.
+          var bg = ctx.createLinearGradient(0, 0, 0, H);
+          bg.addColorStop(0, "#0b1017");
+          bg.addColorStop(0.5, "#05070a");
+          bg.addColorStop(1, "#030405");
+          ctx.fillStyle = bg;
+          ctx.fillRect(0, 0, W, H);
+
+          var cy = 1470; // panel centre: clear of the clock above and the shortcuts below
+          var glow = ctx.createRadialGradient(W / 2, cy, 60, W / 2, cy, 950);
+          glow.addColorStop(0, "rgba(57,255,156,0.18)");
+          glow.addColorStop(1, "rgba(57,255,156,0)");
+          ctx.fillStyle = glow;
+          ctx.fillRect(0, 0, W, H);
+
+          // Neural mesh (seeded so every export looks the same).
+          var seed = 0x6a6b;
+          function rand() {
+            seed = (seed + 0x6d2b79f5) | 0;
+            var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          }
+          var nodes = [];
+          for (var i = 0; i < 80; i++) nodes.push([rand() * W, rand() * H]);
+          ctx.lineWidth = 2;
+          for (var a = 0; a < nodes.length; a++) {
+            for (var b = a + 1; b < nodes.length; b++) {
+              var dx = nodes[a][0] - nodes[b][0], dy = nodes[a][1] - nodes[b][1];
+              var dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 260) {
+                ctx.strokeStyle = "rgba(57,255,156," + (0.16 * (1 - dist / 260)).toFixed(3) + ")";
+                ctx.beginPath(); ctx.moveTo(nodes[a][0], nodes[a][1]); ctx.lineTo(nodes[b][0], nodes[b][1]); ctx.stroke();
+              }
+            }
+          }
+          ctx.fillStyle = "rgba(57,255,156,0.55)";
+          nodes.forEach(function (n) { ctx.beginPath(); ctx.arc(n[0], n[1], 4, 0, Math.PI * 2); ctx.fill(); });
+
+          // Scanlines.
+          ctx.fillStyle = "rgba(255,255,255,0.018)";
+          for (var y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+
+          // QR panel: light field, dark modules, 4-module quiet zone, whole-pixel modules.
+          var total = m.size + 8;
+          var unit = Math.floor(720 / total);
+          var qrPx = unit * total, pad = 24, panel = qrPx + pad * 2;
+          var px = Math.round((W - panel) / 2), py = Math.round(cy - panel / 2);
+          ctx.save();
+          ctx.shadowColor = "rgba(57,255,156,0.55)";
+          ctx.shadowBlur = 70;
+          ctx.fillStyle = "#ffffff";
+          roundRect(ctx, px, py, panel, panel, 28);
+          ctx.fill();
+          ctx.restore();
+          ctx.fillStyle = "#000000";
+          var ox = px + pad + 4 * unit, oy = py + pad + 4 * unit;
+          for (var r = 0; r < m.size; r++) {
+            for (var c = 0; c < m.size; c++) {
+              if (m.isDark(r, c)) ctx.fillRect(ox + c * unit, oy + r * unit, unit, unit);
+            }
+          }
+
+          // Text.
+          ctx.textAlign = "center";
+          ctx.textBaseline = "alphabetic";
+          var maxW = W - 160;
+          ctx.font = '600 34px "JetBrains Mono", ui-monospace, monospace';
+          ctx.fillStyle = "#39ff9c";
+          ctx.fillText("> SCAN TO RUN THE FORWARD PASS", W / 2, py - 56, maxW);
+          var ty = py + panel + 120;
+          if (name) {
+            ctx.font = '700 72px "Space Grotesk", system-ui, sans-serif';
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(name, W / 2, ty, maxW);
+            ty += 72;
+          }
+          ctx.font = '600 40px "JetBrains Mono", ui-monospace, monospace';
+          ctx.fillStyle = "#39ff9c";
+          ctx.fillText(shown, W / 2, ty, maxW);
+          var sub = [P.title, P.company].filter(isSet).join(" · ");
+          if (sub) {
+            ctx.font = '400 32px "JetBrains Mono", ui-monospace, monospace';
+            ctx.fillStyle = "#8a98a8";
+            ctx.fillText(sub, W / 2, ty + 58, maxW);
+          }
+          return canvas;
+        });
+      }
+
+      function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+    }
+
+    /* The QR library loads async: wait for it (or its failure) briefly so the
+       sheets are built once, with real codes. After 4s, build without them. */
+    function start() {
+      if (window.GUNR_QR && window.GUNR_QR.ready()) { init(); return; }
+      var started = false;
+      function go() {
+        if (started) return;
+        started = true;
+        document.removeEventListener("gunr:qr-ready", go);
+        document.removeEventListener("gunr:qr-failed", go);
+        init();
+      }
+      document.addEventListener("gunr:qr-ready", go);
+      document.addEventListener("gunr:qr-failed", go);
+      setTimeout(go, 4000);
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", start);
+    } else {
+      start();
+    }
+  })();
+  </script>
+</body>
+</html>

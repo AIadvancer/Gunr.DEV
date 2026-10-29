@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>404 · Token not found · GUNR.DEV</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#05070a">
+  <meta name="color-scheme" content="dark">
+  <!-- Self-contained on purpose: GitHub Pages serves this file at any missing
+       path (e.g. /a/b/c), where relative links to css/ or js/ would break. -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305070a'/%3E%3Crect x='11' y='11' width='10' height='10' fill='%2339ff9c' transform='rotate(45 16 16)'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;family=Space+Grotesk:wght@700&amp;display=swap">
+  <style>
+    :root {
+      --bg: #05070a; --bg-2: #0b1017; --fg: #d8e1ea; --fg-dim: #8a98a8;
+      --accent: #39ff9c; --accent-rgb: 57, 255, 156; --accent-3: #ffb547; --danger: #ff4d6d;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color-scheme: dark;
+    }
+    :root[data-theme="amber"] { --accent: #ffb547; --accent-rgb: 255, 181, 71; }
+    :root[data-theme="cyan"] { --accent: #00d4ff; --accent-rgb: 0, 212, 255; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); }
+    body {
+      min-height: 100vh;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: 32px 16px;
+      color: var(--fg);
+      font: 400 15px/1.6 var(--mono);
+      background:
+        radial-gradient(circle at 70% 20%, rgba(var(--accent-rgb), .12), transparent 55%),
+        var(--bg);
+      overflow-x: hidden;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 1px, transparent 1px, transparent 3px),
+        radial-gradient(ellipse at center, transparent 58%, rgba(0,0,0,.55) 100%);
+    }
+    main { width: 100%; max-width: 640px; }
+    .tag { margin: 0 0 10px; color: var(--accent); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; }
+    .tag span { color: var(--fg-dim); }
+    h1 {
+      margin: 0 0 22px;
+      font: 700 clamp(36px, 9vw, 64px)/1 var(--display);
+      letter-spacing: -.035em;
+    }
+    h1 em { font-style: normal; color: var(--accent); }
+    .panel {
+      border: 1px solid rgba(var(--accent-rgb), .18);
+      border-radius: 4px;
+      background: rgba(16, 22, 30, .72);
+    }
+    .bar {
+      display: flex; align-items: center; gap: 10px;
+      min-height: 34px; padding: 0 12px;
+      border-bottom: 1px solid rgba(var(--accent-rgb), .18);
+      color: var(--fg-dim); font-size: 12px;
+    }
+    .dots { display: inline-flex; gap: 5px; }
+    .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); opacity: .75; }
+    .dots i:nth-child(2) { background: var(--accent-3); }
+    .dots i:nth-child(3) { background: var(--accent); }
+    pre {
+      margin: 0;
+      padding: 18px;
+      font: inherit;
+      font-size: 13px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .err { color: var(--danger); }
+    .ok { color: var(--accent); }
+    .dim { color: var(--fg-dim); }
+    .cursor { display: inline-block; width: .6em; height: 1.1em; vertical-align: -.2em; background: var(--accent); animation: blink 1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 48px; padding: 0 18px;
+      border: 1px solid rgba(var(--accent-rgb), .42);
+      border-radius: 4px;
+      color: var(--fg);
+      font: 600 14px var(--mono);
+      text-decoration: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #03140b; }
+    .btn:hover { border-color: var(--accent); box-shadow: 0 0 12px rgba(var(--accent-rgb), .55); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  </style>
+  <script>
+    try {
+      var t = localStorage.getItem("gunr.theme");
+      if (t === "amber" || t === "cyan" || t === "green") document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <main>
+    <p class="tag">LAYER ?? <span>//</span> UNKNOWN</p>
+    <h1>Token not found <em>in vocabulary.</em></h1>
+    <div class="panel">
+      <div class="bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>tokenizer.log</span></div>
+<pre><span class="dim">&gt;&gt;&gt;</span> vocab.encode(<span id="path">"/this-page"</span>)
+<span class="err">KeyError: 404 · token not in vocabulary</span>
+<span class="dim">&gt;&gt;&gt;</span> fallback = "&lt;unk&gt;"
+<span class="ok">re-routing to input layer...</span> <span class="cursor" aria-hidden="true"></span></pre>
+    </div>
+    <div class="actions">
+      <a class="btn primary" id="home" href="/">Return to the input layer</a>
+      <a class="btn" id="contact" href="/#layer-output">Jump to contact</a>
+    </div>
+  </main>
+  <script>
+    (function () {
+      var path = location.pathname || "/";
+      var el = document.getElementById("path");
+      if (el) el.textContent = JSON.stringify(decodeURIComponentSafe(path));
+
+      // Work out the site root: "/" on a custom domain, "/<repo>/" on a
+      // github.io project page, and index.html when opened from disk.
+      var base = "/";
+      if (location.protocol === "file:") {
+        base = "index.html";
+      } else if (/\.github\.io$/i.test(location.hostname)) {
+        var seg = path.split("/")[1];
+        if (seg && seg.indexOf(".") === -1) base = "/" + seg + "/";
+      }
+      document.getElementById("home").setAttribute("href", base);
+      document.getElementById("contact").setAttribute("href", base + "#layer-output");
+
+      function decodeURIComponentSafe(s) {
+        try { return decodeURIComponent(s); } catch (e) { return s; }
+      }
+    })();
+  </script>
+</body>
+</html>
