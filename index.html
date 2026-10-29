@@ -7,115 +7,125 @@
   <!-- Social / search preview copy. Crawlers do not run JavaScript, so these few
        known facts are duplicated here; keep them in sync with js/content.js.
        journey.js overwrites <title> and the description from PROFILE at runtime. -->
-  <title>Gunnar Patterson · GUNR // Forward Pass</title>
+  <title>Gunnar Patterson · GUNR</title>
   <meta name="description" content="Gunnar Patterson (GUNR): IT Specialist at Moorhead Holdings and long-time AI researcher. Run the forward pass and save my contact.">
-  <meta name="theme-color" content="#05070a">
+  <meta name="theme-color" content="#0B0B0C">
   <meta name="color-scheme" content="dark">
 
-  <!-- Absolute URLs are required by Open Graph. The domain is hardcoded here
-       (gunr.dev); if you deploy elsewhere, update these and PROFILE.siteUrl. -->
+  <!-- Absolute URLs are required by Open Graph (domain: gunr.dev). -->
   <link rel="canonical" href="https://gunr.dev/">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://gunr.dev/">
   <meta property="og:site_name" content="GUNR.DEV">
-  <meta property="og:title" content="Gunnar Patterson · GUNR // Forward Pass">
+  <meta property="og:title" content="Gunnar Patterson · GUNR">
   <meta property="og:description" content="IT Specialist at Moorhead Holdings. Years of AI research. Run the forward pass and save my contact.">
   <meta property="og:image" content="https://gunr.dev/assets/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="GUNR // Forward Pass: Gunnar Patterson's networking card">
+  <meta property="og:image:alt" content="GUNR: Gunnar Patterson's networking site">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Gunnar Patterson · GUNR // Forward Pass">
+  <meta name="twitter:title" content="Gunnar Patterson · GUNR">
   <meta name="twitter:description" content="IT Specialist at Moorhead Holdings. Years of AI research. Run the forward pass and save my contact.">
   <meta name="twitter:image" content="https://gunr.dev/assets/og.png">
 
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
 
-  <!-- Fonts load without blocking first paint; system fallbacks are in style.css. -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- QR library CDN (script, no-cors: no crossorigin attribute). -->
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Space+Grotesk:wght@500;700&amp;display=swap"></noscript>
-
-  <link rel="stylesheet" href="css/style.css">
-  <!-- The terminal overlay is built hidden on demand, so its CSS need not block first paint. -->
-  <link rel="stylesheet" href="css/terminal.css" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="css/terminal.css"></noscript>
-
-  <!-- Runs before first paint: flags JS, restores the saved theme, and decides
-       whether the boot screen shows (seen this session / reduced motion => skip). -->
+  <!-- Runs before first paint. Decides the motion mode once for every script:
+       ?motion=full | ?motion=reduced override the OS preference. Also restores
+       the theme and decides whether the loader shows (once per session). -->
   <script>
-    (function (d) {
+    (function (w, d) {
       var h = d.documentElement;
       h.className = h.className.replace("no-js", "js");
+      var q = /[?&]motion=(full|reduced)\b/.exec(w.location.search);
+      var prefersReduced = !!(w.matchMedia && w.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      var full = q ? q[1] === "full" : !prefersReduced;
+      w.GUNR_MOTION = { full: full };
+      h.classList.add(full ? "motion-full" : "motion-reduced");
+
+      var LEGACY = { green: "lime", amber: "signal", cyan: "cyan", lime: "lime", signal: "signal" };
       try {
-        var t = localStorage.getItem("gunr.theme");
-        if (t === "green" || t === "amber" || t === "cyan") h.setAttribute("data-theme", t);
+        var t = LEGACY[localStorage.getItem("gunr.theme")];
+        if (t) h.setAttribute("data-theme", t);
       } catch (e) {}
+
       var seen = false;
       try { seen = sessionStorage.getItem("gunr.booted") === "1"; } catch (e) {}
-      var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (seen || still) h.className += " no-boot";
-      // Failsafe: never leave the boot overlay up if boot.js did not run.
-      setTimeout(function () { if (!window.GUNR_BOOT) h.className += " no-boot"; }, 7000);
-    })(document);
+      h.classList.add(seen || !full ? "no-boot" : "is-booting");
+
+      // Failsafes: never keep the loader up, or content hidden, if a script failed.
+      setTimeout(function () {
+        if (!w.GUNR_BOOT) { h.classList.add("no-boot"); h.classList.remove("is-booting"); }
+      }, 6000);
+      setTimeout(function () { if (!w.GUNR_JOURNEY_READY) h.classList.add("reveal-all"); }, 4000);
+    })(window, document);
   </script>
+
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js" } }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Classic scripts are fetched no-cors, the three.js module with CORS: warm both. -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&amp;family=Geist+Mono:wght@400;500&amp;family=Instrument+Serif:ital@0;1&amp;display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&amp;family=Geist+Mono:wght@400;500&amp;family=Instrument+Serif:ital@0;1&amp;display=swap"></noscript>
+
+  <link rel="stylesheet" href="css/style.css">
+  <!-- The terminal overlay is built on demand, so its CSS need not block first paint. -->
+  <link rel="stylesheet" href="css/terminal.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="css/terminal.css"></noscript>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <!-- BOOT (layer -1). Hidden without JS; boot.js drives it. -->
-  <div id="boot" class="boot" role="dialog" aria-modal="true" aria-label="GUNR//OS boot sequence">
-    <div class="boot-shutter boot-shutter--top" aria-hidden="true"></div>
-    <div class="boot-shutter boot-shutter--bottom" aria-hidden="true"></div>
-    <div class="boot-beam" aria-hidden="true"></div>
-    <button type="button" class="boot-skip" id="boot-skip">skip intro <kbd>esc</kbd></button>
-    <div class="boot-screen">
-      <div class="boot-logo" aria-hidden="true"><span class="boot-logo-mark">G</span></div>
-      <pre class="boot-log" id="boot-log" aria-live="off"></pre>
-      <button type="button" class="boot-prompt" id="boot-prompt" tabindex="-1">
-        <span class="boot-prompt-caret">&gt;</span> <span id="boot-prompt-text">PRESS ANY KEY TO BEGIN FORWARD PASS</span><span class="boot-cursor" aria-hidden="true"></span>
-      </button>
+  <!-- Loader (first visit per session, full motion only); js/boot.js drives it. -->
+  <div id="boot" class="boot" role="dialog" aria-modal="true" aria-label="Loading">
+    <div class="boot-top">
+      <span class="boot-mark"><i aria-hidden="true"></i>GUNR</span>
+      <button type="button" class="boot-skip" id="boot-skip">Skip intro <span aria-hidden="true">&rarr;</span></button>
+    </div>
+    <div class="boot-bottom">
+      <p class="boot-label"><span>Loading weights</span> <span class="boot-file" id="boot-file">model.safetensors</span></p>
+      <p class="boot-count" aria-hidden="true"><span class="boot-digit"><i>0</i></span><span class="boot-digit"><i>0</i></span><span class="boot-digit"><i>0</i></span></p>
+      <div class="boot-bar" aria-hidden="true"><i id="boot-bar"></i></div>
     </div>
   </div>
-  <!-- "skip intro" works even before boot.js arrives; boot.js finishes at once
-       when it finds .no-boot already set. -->
   <script>
+    // "Skip intro" works even before boot.js arrives.
     document.getElementById("boot-skip").addEventListener("click", function () {
-      if (!window.GUNR_BOOT) document.documentElement.classList.add("no-boot");
+      if (!window.GUNR_BOOT) { document.documentElement.classList.add("no-boot"); document.documentElement.classList.remove("is-booting"); }
     });
   </script>
 
-  <canvas id="net" class="net" aria-hidden="true"></canvas>
-  <div class="crt" aria-hidden="true"></div>
+  <!-- Background layers: static backdrop (WebGL fallback), the particle scene, film grain. -->
+  <div class="backdrop" aria-hidden="true"></div>
+  <canvas id="scene" class="scene" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
 
   <div id="app" class="app">
-    <!-- Mobile/tablet: slim top bar with the progress bar. Desktop: hidden. -->
-    <header class="topbar">
-      <a class="brand" href="#layer-input"><span class="brand-mark" aria-hidden="true"></span>GUNR<span class="brand-sep">//</span>DEV</a>
-      <span class="topbar-layer" id="topbar-layer" aria-hidden="true">L00 // INPUT</span>
-      <div class="progress" aria-hidden="true">
-        <span class="progress-fill" id="progress-fill"></span>
-        <span class="progress-token" id="progress-token"></span>
-      </div>
+    <header class="topbar" id="topbar">
+      <a class="brand" href="#layer-input" aria-label="GUNR, back to top"><i class="brand-dot" aria-hidden="true"></i><span>GUNR</span></a>
+      <p class="topbar-layer" aria-hidden="true"><span class="topbar-idx" id="topbar-idx">00</span><span class="topbar-name" id="topbar-layer">Input</span></p>
+      <a class="topbar-cta u-link" href="#layer-output">Contact</a>
+      <span class="topbar-progress" aria-hidden="true"><i id="progress-fill"></i></span>
     </header>
 
-    <!-- Desktop layer rail; nodes are rendered by journey.js. -->
-    <nav class="rail" id="rail" aria-label="Network layers"></nav>
+    <!-- Desktop section index; rendered by journey.js. -->
+    <nav class="index" id="section-index" aria-label="Sections"></nav>
 
     <main id="main" tabindex="-1">
       <div id="journey" class="journey"></div>
 
       <noscript>
         <section class="noscript-card">
-          <p class="layer-tag">LAYER 00 // INPUT</p>
-          <h1>Gunnar Patterson</h1>
-          <p class="noscript-role">IT Specialist at Moorhead Holdings <span>(formerly Moorhead Brothers)</span></p>
-          <p>IT infrastructure by day, years of hands-on AI research alongside it. Handle: GUNR.</p>
-          <p>This site is an interactive "forward pass" through a neural network and needs JavaScript for the full experience. The essentials:</p>
+          <p class="label">Gunnar Patterson &middot; GUNR</p>
+          <h1>Gunnar <em>Patterson</em></h1>
+          <p>IT Specialist at Moorhead Holdings (formerly Moorhead Brothers). IT infrastructure by day, years of hands-on AI research alongside it.</p>
+          <p>This site is an interactive forward pass and needs JavaScript for the full experience. The essentials:</p>
           <ul>
             <li><a href="https://github.com/AIadvancer">GitHub: github.com/AIadvancer</a></li>
             <li><a href="card.html">Printable card and QR code</a></li>
@@ -126,7 +136,7 @@
 
     <footer class="site-footer" id="site-footer"></footer>
 
-    <!-- Mobile sticky action dock; buttons rendered by journey.js. -->
+    <!-- Mobile sticky contact dock; rendered by journey.js. -->
     <nav class="dock" id="dock" aria-label="Quick contact"></nav>
   </div>
 
@@ -135,15 +145,19 @@
   <!-- Terminal easter egg toggle; js/terminal.js binds it. -->
   <button type="button" id="term-toggle" class="term-toggle" aria-label="Open terminal" title="Terminal (`)">&gt;_</button>
 
-  <!-- The QR library is async so a slow or blocked CDN never delays the page.
-       journey.js fills the Output layer's QR once gunr:qr-ready fires. -->
+  <!-- QR library is async so a slow or blocked CDN never delays the page;
+       journey.js fills the QR once gunr:qr-ready fires. -->
   <script async src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" onload="document.dispatchEvent(new Event('gunr:qr-ready'))" onerror="document.dispatchEvent(new Event('gunr:qr-failed'))"></script>
   <script defer src="js/content.js"></script>
   <script defer src="js/vcard.js"></script>
   <script defer src="js/qr.js"></script>
-  <script defer src="js/net.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js"></script>
   <script defer src="js/boot.js"></script>
   <script defer src="js/journey.js"></script>
   <script defer src="js/terminal.js"></script>
+  <script type="module" src="js/scene.js"></script>
 </body>
 </html>

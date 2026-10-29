@@ -1,22 +1,49 @@
 # GUNR.DEV — Forward Pass
 
 A personal networking site and digital business card for Gunnar Patterson (GUNR). The concept is
-**Forward Pass**: the visitor is a token run through a neural network. After a short GUNR//OS boot
-screen, scrolling carries them through the layers of a model. It starts at **Input** (identity, with
+**Forward Pass**: the visitor is a token run through a neural network. After a short "loading weights"
+counter, scrolling carries them through the layers of a model. It starts at **Input** (identity, with
 Save Contact / Email / Call / LinkedIn), then moves through **Embedding** (about), **Attention**
-(AI research), **Hidden Layers** (experience as a training log), and **Weights** (skills). It ends at
-**Output** (contact, QR, share). It is plain HTML, CSS and JavaScript with no build step. It's built
+(AI research), **Hidden Layers** (experience), and **Weights** (skills). It ends at **Output**
+(contact, QR, share). It is static HTML, CSS and JavaScript (ES modules, no build step), built
 mobile-first because most visitors arrive by scanning a QR code on a phone.
+
+### Design
+
+Editorial and restrained, with the motion doing the talking:
+
+- **Palette:** warm ink `#0B0B0C` and paper `#EDEAE4`, with one accent, signal orange `#FF5A1F`, used
+  sparingly. A faint film grain sits over everything. No neon, no glows, no gradient text.
+- **Type:** *Instrument Serif* for big headlines (italic for emphasis), *Geist* for body and UI, and
+  *Geist Mono* only for small technical labels, the loader counter and the terminal.
+- **Layout:** a 12-column grid, hairline rules instead of boxes, large section numerals `01`–`05`.
+- **Motion:** smooth scrolling (Lenis) drives GSAP ScrollTrigger reveals, a pinned horizontal
+  experience track and a velocity-reactive skills marquee. A WebGL particle field (Three.js) behind
+  the page morphs between a shape for every layer (core, embedding sphere, attention arcs, stacked
+  hidden planes, a wave grid, and finally the letters GUNR).
+- **Fallbacks:** content, contact buttons and the vCard work without WebGL or if a CDN fails. With
+  *reduce motion* turned on, there is no smooth-scroll hijack or pinning and the scene shows one still frame.
 
 ---
 
 ## Quick start
 
-1. Double-click **`index.html`**. It runs straight from your disk (`file://`), so you don't need a server or installs.
-2. Edit **`js/content.js`**, save, and refresh the browser.
+The site uses ES modules, so it needs a local web server (double-clicking `index.html` no longer works).
 
-> Fonts (Google Fonts) and the QR library (jsDelivr) load from the internet. When you're offline the
-> site falls back to system fonts and shows the URL as text instead of a QR code.
+1. In PowerShell, from this folder, run:
+   ```
+   powershell -ExecutionPolicy Bypass -File .\serve.ps1
+   ```
+2. Open **http://localhost:8787**.
+3. Edit **`js/content.js`**, save, and refresh the browser.
+
+**Testing motion:** add `?motion=full` to force the full animations even if your system asks for
+reduced motion, or `?motion=reduced` to see the calm version, for example
+`http://localhost:8787/?motion=full`. Without the switch, the site follows your OS setting.
+The loader shows once per browser tab; open a new tab to see it again.
+
+> Fonts (Google Fonts) and libraries (jsDelivr) load from the internet. When you're offline the
+> site falls back to system fonts, skips the 3D scene, and shows the URL as text instead of a QR code.
 
 ---
 
@@ -87,7 +114,7 @@ Use ↑/↓ for history and **Tab** to complete. All output comes from `js/conte
 | `qr` | Show a QR code for the site |
 | `copy email` / `copy url` | Copy to clipboard |
 | `goto <layer>` | Jump to `input`, `embedding`, `attention`, `hidden`, `weights`, `output` (aliases like `about`, `skills`, `contact` work too) |
-| `theme <green\|amber\|cyan>` | Recolor the site (remembered in this browser) |
+| `theme <signal\|lime\|cyan>` | Swap the accent color: signal orange (default), lime or cyan. Also recolors the 3D particles and is remembered in this browser. The old names `green` and `amber` still work. |
 | `ls` · `cat <file>` | Files: `about.txt`, `experience.log`, `skills.json`, `resume.txt`, `contact.vcf`, `research/` |
 | `cv` (`resume`) | Same as `cat resume.txt` |
 | `nvidia-smi` · `neofetch` | Fake GPU / system readout |
@@ -104,13 +131,16 @@ Use ↑/↓ for history and **Tab** to complete. All output comes from `js/conte
 > with the wrong URL can't be fixed later. **Wait to print until the live address (ideally `https://gunr.dev`)
 > opens on your phone.**
 
-1. Open **`card.html`**, on the live site or by double-clicking it locally.
+1. Open **`card.html`** on the live site, or locally at **http://localhost:8787/card.html** (see Quick start).
+   The printed designs match the site: name in Instrument Serif, details in Geist and Geist Mono, a single
+   signal-orange rule, and the QR code always dark on light with a quiet zone so it scans reliably.
 2. Pick a layout:
    - **Business cards**: 3.5 × 2 in, 10-up on US Letter, with crop marks. Choose *front + back (duplex)*,
      *front only*, or *back only*. Use **Shift X/Y (mm)** to line up the back if your printer drifts.
    - **Stickers / badges**: 2 × 2 in, 12-up.
    - **Poster**: one large QR on a full page, for a table or booth.
-3. Leave **Ink-friendly** on (black on white). That's the most reliable setup for scanning.
+3. Leave **Ink-friendly** on (black on white with one orange rule). That's the most reliable setup for
+   scanning. Turn it off for the dark ink version, and tick **Background graphics** when printing it.
 4. Click **Print**. In the print dialog, set **Scale 100% / Actual size**, turn **margins off/default**,
    and pick **double-sided, flip on long edge** for duplex cards.
 5. Scan a test print with your phone before you print a full batch.
@@ -200,7 +230,8 @@ card.html             printable cards / stickers / poster + QR downloads
 404.html              "token not found in vocabulary" page
 css/style.css         main styles     css/terminal.css  terminal overlay     css/print.css  card.html
 js/content.js         ALL personal content + siteUrl  <- edit this
-js/vcard.js  js/qr.js js/boot.js  js/net.js  js/journey.js  js/terminal.js
+js/vcard.js  js/qr.js js/boot.js  js/scene.js (WebGL particles)  js/journey.js  js/terminal.js
+serve.ps1             local preview server (http://localhost:8787)
 assets/               optional generated media (see ASSET_PROMPTS.md)
 favicon.svg  manifest.webmanifest
 ```

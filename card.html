@@ -6,17 +6,35 @@
   <title>Networking kit // GUNR.DEV</title>
   <meta name="description" content="Printable business cards, QR stickers and a table poster for GUNR.DEV.">
   <meta name="robots" content="noindex">
-  <meta name="theme-color" content="#05070a">
+  <meta name="theme-color" content="#0B0B0C">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
+
+  <script>
+  /* Motion switch (same contract as index.html): ?motion=full|reduced beats the OS
+     setting. Also restores the accent theme chosen in the site terminal. */
+  (function () {
+    var root = document.documentElement, q = "";
+    try { q = new URLSearchParams(location.search).get("motion") || ""; } catch (e) { /* old browser */ }
+    var full = q === "full" ? true : q === "reduced" ? false :
+      !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    window.GUNR_MOTION = window.GUNR_MOTION || { full: full };
+    if (!window.GUNR_MOTION.full) root.classList.add("motion-reduced");
+    try {
+      var t = localStorage.getItem("gunr.theme");
+      t = { green: "lime", amber: "signal" }[t] || t;
+      if (t === "lime" || t === "cyan" || t === "signal") root.dataset.theme = t;
+    } catch (e) { /* storage blocked */ }
+  })();
+  </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@300..600&family=Instrument+Serif:ital@0;1&display=swap">
   <link rel="stylesheet" href="css/print.css">
 
-  <!-- Classic deferred scripts (works on file:// and GitHub Pages). Order matters.
+  <!-- Classic deferred scripts. Order matters.
        The QR library is async so a slow or blocked CDN never holds up the rest;
        it announces itself with gunr:qr-ready / gunr:qr-failed on document. -->
   <script defer src="js/content.js"></script>
@@ -28,69 +46,66 @@
   <a class="skip no-print" href="#controls">Skip to controls</a>
 
   <header class="topbar no-print">
-    <a class="topbar__back" href="index.html">&larr; back to the forward pass</a>
-    <p class="topbar__title"><span class="accent" data-fill="handle"></span>//KIT <span class="dim">print + share</span></p>
+    <a class="topbar__back" href="index.html"><span class="topbar__arrow" aria-hidden="true">&larr;</span> Back to the site</a>
+    <p class="topbar__title topbar__mark"><span data-fill="handle"></span><span class="dim">/ networking kit</span></p>
   </header>
 
   <div class="app">
     <aside id="controls" class="controls no-print" aria-labelledby="kit-title">
-      <section class="panel">
-        <div class="panel__bar"><span class="dots" aria-hidden="true">&#9679; &#9679; &#9679;</span><span>kit.cfg</span></div>
-        <div class="panel__body">
-          <div>
-            <p class="kicker">Layer 05 // Output &rarr; paper</p>
-            <h1 id="kit-title" class="h1">Networking kit</h1>
-          </div>
+      <div class="controls__inner">
+        <div class="intro">
+          <p class="kicker"><span class="kicker__n">05</span> Output &rarr; paper</p>
+          <h1 id="kit-title" class="h1">Networking <em>kit</em></h1>
           <p class="lede">Business cards, QR stickers and a table poster. Every code points to the same address, so update <code>siteUrl</code> in <code>js/content.js</code> and reprint.</p>
-
-          <div id="alerts" class="alerts" role="status" aria-live="polite"></div>
-
-          <figure class="live-qr">
-            <div id="liveQr" class="live-qr__code"></div>
-            <figcaption>Points to <a id="liveUrl" href="#">&hellip;</a></figcaption>
-          </figure>
-
-          <form id="kitForm" class="form" novalidate>
-            <fieldset>
-              <legend>Layout</legend>
-              <label class="choice"><input type="radio" name="layout" value="cards-duplex" checked>
-                <span>Business cards, front + back<small>3.5 &times; 2 in, 10-up, 2 pages for duplex</small></span></label>
-              <label class="choice"><input type="radio" name="layout" value="cards-front">
-                <span>Business cards, front only<small>3.5 &times; 2 in, 10-up</small></span></label>
-              <label class="choice"><input type="radio" name="layout" value="cards-back">
-                <span>Business cards, back only<small>Columns mirrored for duplex</small></span></label>
-              <label class="choice"><input type="radio" name="layout" value="stickers">
-                <span>Stickers / badges<small>2 &times; 2 in square, 12-up</small></span></label>
-              <label class="choice"><input type="radio" name="layout" value="poster">
-                <span>Poster<small>One full-page QR for a booth or table</small></span></label>
-            </fieldset>
-
-            <fieldset>
-              <legend>Options</legend>
-              <label class="choice"><input type="checkbox" name="ink" checked>
-                <span>Ink-friendly<small>Black on white. Turn off for the dark terminal look.</small></span></label>
-              <label class="choice"><input type="checkbox" name="marks" checked>
-                <span>Crop marks<small>Faint cut guides in the page margin</small></span></label>
-            </fieldset>
-
-            <fieldset id="nudge" class="nudge">
-              <legend>Back-side alignment</legend>
-              <label class="num">Shift X (mm)<input type="number" name="nx" value="0" step="0.5" min="-6" max="6" inputmode="decimal"></label>
-              <label class="num">Shift Y (mm)<input type="number" name="ny" value="0" step="0.5" min="-6" max="6" inputmode="decimal"></label>
-              <p>Only if a test duplex print is off. Positive X moves the back right, positive Y moves it down.</p>
-            </fieldset>
-          </form>
-
-          <button id="printBtn" type="button" class="btn btn--primary btn--block">Print</button>
-
-          <div class="btn-grid" role="group" aria-label="Downloads and sharing">
-            <button id="dlSvg" type="button" class="btn">Download QR as SVG</button>
-            <button id="dlPng" type="button" class="btn">Download QR as PNG (1024px)</button>
-            <button id="dlVcf" type="button" class="btn">Save contact (.vcf)</button>
-            <button id="copyLink" type="button" class="btn">Copy link</button>
-          </div>
         </div>
-      </section>
+
+        <div id="alerts" class="alerts" role="status" aria-live="polite"></div>
+
+        <figure class="live-qr">
+          <div id="liveQr" class="live-qr__code"></div>
+          <figcaption><span class="mono-label">Every code points to</span><a id="liveUrl" href="#">&hellip;</a></figcaption>
+        </figure>
+
+        <form id="kitForm" class="form" novalidate>
+          <fieldset>
+            <legend><span class="n">01</span> Layout</legend>
+            <label class="choice"><input type="radio" name="layout" value="cards-duplex" checked>
+              <span>Business cards, front + back<small>3.5 &times; 2 in &middot; 10-up &middot; 2 pages for duplex</small></span></label>
+            <label class="choice"><input type="radio" name="layout" value="cards-front">
+              <span>Business cards, front only<small>3.5 &times; 2 in &middot; 10-up</small></span></label>
+            <label class="choice"><input type="radio" name="layout" value="cards-back">
+              <span>Business cards, back only<small>Columns mirrored for duplex</small></span></label>
+            <label class="choice"><input type="radio" name="layout" value="stickers">
+              <span>Stickers / badges<small>2 &times; 2 in square &middot; 12-up</small></span></label>
+            <label class="choice"><input type="radio" name="layout" value="poster">
+              <span>Poster<small>One full-page QR for a booth or table</small></span></label>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="n">02</span> Options</legend>
+            <label class="choice"><input type="checkbox" name="ink" checked>
+              <span>Ink-friendly<small>Black on white. Turn off for the dark ink look.</small></span></label>
+            <label class="choice"><input type="checkbox" name="marks" checked>
+              <span>Crop marks<small>Faint cut guides in the page margin</small></span></label>
+          </fieldset>
+
+          <fieldset id="nudge" class="nudge">
+            <legend><span class="n">03</span> Back-side alignment</legend>
+            <label class="num">Shift X (mm)<input type="number" name="nx" value="0" step="0.5" min="-6" max="6" inputmode="decimal"></label>
+            <label class="num">Shift Y (mm)<input type="number" name="ny" value="0" step="0.5" min="-6" max="6" inputmode="decimal"></label>
+            <p>Only if a test duplex print is off. Positive X moves the back right, positive Y moves it down.</p>
+          </fieldset>
+        </form>
+
+        <button id="printBtn" type="button" class="btn btn--primary btn--block">Print <span class="btn__arrow" aria-hidden="true">&rarr;</span></button>
+
+        <div class="btn-grid" role="group" aria-label="Downloads and sharing">
+          <button id="dlSvg" type="button" class="btn">QR as SVG</button>
+          <button id="dlPng" type="button" class="btn">QR as PNG (1024px)</button>
+          <button id="dlVcf" type="button" class="btn">Save contact (.vcf)</button>
+          <button id="copyLink" type="button" class="btn">Copy link</button>
+        </div>
+      </div>
     </aside>
 
     <main id="main" class="main">
@@ -98,34 +113,31 @@
       <p class="sr-only">The preview below is a visual copy of what will print. All actions are in the controls.</p>
       <div id="preview" class="preview"></div>
 
-      <section class="panel tips no-print" aria-labelledby="tips-title">
-        <div class="panel__bar"><span class="dots" aria-hidden="true">&#9679; &#9679; &#9679;</span><span>README.print</span></div>
-        <div class="panel__body">
-          <h2 id="tips-title" class="h2">Print tips</h2>
-          <div class="tips__grid">
-            <div>
-              <h3>Get the size right</h3>
-              <ul>
-                <li>Paper: US Letter. Scale: <strong>100% / "Actual size"</strong>, never "Fit to page".</li>
-                <li>Margins: <strong>None</strong> (or Default in Chrome). The sheet sets its own margins.</li>
-                <li>Dark look: tick <strong>Background graphics</strong> in the print dialog.</li>
-                <li>Duplex: flip on the <strong>long edge</strong>. Print one test sheet, hold it up to a light, then nudge the back if needed.</li>
-                <li>Stock: <strong>14pt or 16pt matte</strong> cardstock. Matte avoids glare, so codes scan better. Check your printer's max paper weight.</li>
-                <li>No heavy-stock printer? Send the <strong>SVG</strong> to a print shop. It stays sharp at any size.</li>
-                <li>Before printing a batch, test-scan with two different phones: the poster from <strong>1 m (3 ft)</strong> and a card at arm's length.</li>
-              </ul>
-            </div>
-            <div>
-              <h3>Networking in the field</h3>
-              <ul>
-                <li><strong>NFC tag on your phone case:</strong> stick an NTAG213/215 sticker on the back and write your URL to it with a free NFC writer app. Test it, then lock the tag. People can tap your phone to open the site.</li>
-                <li><strong>Lock-screen QR:</strong> set this as your wallpaper. It fits iPhone-size screens and works on most phones. Raise your phone and they can scan it, no unlocking needed.</li>
-                <li>Put a sticker on the back of your conference badge and your laptop lid.</li>
-                <li>Save your own .vcf to your phone so you can AirDrop or share it in a couple of taps.</li>
-                <li>Put the same URL in your email signature and LinkedIn header, so every channel leads to one place.</li>
-              </ul>
-              <p style="margin-top:14px"><button id="dlLock" type="button" class="btn">Download lock-screen QR (1170&times;2532 PNG)</button></p>
-            </div>
+      <section class="tips no-print" aria-labelledby="tips-title">
+        <h2 id="tips-title" class="h2">Print <em>tips</em></h2>
+        <div class="tips__grid">
+          <div>
+            <h3>Get the size right</h3>
+            <ul>
+              <li><span>Paper: US Letter. Scale: <strong>100% / "Actual size"</strong>, never "Fit to page".</span></li>
+              <li><span>Margins: <strong>None</strong> (or Default in Chrome). The sheet sets its own margins.</span></li>
+              <li><span>Dark look: tick <strong>Background graphics</strong> in the print dialog.</span></li>
+              <li><span>Duplex: flip on the <strong>long edge</strong>. Print one test sheet, hold it up to a light, then nudge the back if needed.</span></li>
+              <li><span>Stock: <strong>14pt or 16pt matte</strong> cardstock. Matte avoids glare, so codes scan better. Check your printer's max paper weight.</span></li>
+              <li><span>No heavy-stock printer? Send the <strong>SVG</strong> to a print shop. It stays sharp at any size.</span></li>
+              <li><span>Before printing a batch, test-scan with two different phones: the poster from <strong>1 m (3 ft)</strong> and a card at arm's length.</span></li>
+            </ul>
+          </div>
+          <div>
+            <h3>Networking in the field</h3>
+            <ul>
+              <li><span><strong>NFC tag on your phone case:</strong> stick an NTAG213/215 sticker on the back and write your URL to it with a free NFC writer app. Test it, then lock the tag. People can tap your phone to open the site.</span></li>
+              <li><span><strong>Lock-screen QR:</strong> set this as your wallpaper. It fits iPhone-size screens and works on most phones. Raise your phone and they can scan it, no unlocking needed.</span></li>
+              <li><span>Put a sticker on the back of your conference badge and your laptop lid.</span></li>
+              <li><span>Save your own .vcf to your phone so you can AirDrop or share it in a couple of taps.</span></li>
+              <li><span>Put the same URL in your email signature and LinkedIn header, so every channel leads to one place.</span></li>
+            </ul>
+            <p class="tips__dl"><button id="dlLock" type="button" class="btn">Lock-screen QR (1170&times;2532 PNG) <span class="btn__arrow" aria-hidden="true">&darr;</span></button></p>
           </div>
         </div>
       </section>
@@ -244,7 +256,7 @@
     var toastTimer = 0;
     function toast(msg) {
       var el = $("toast");
-      el.textContent = msg;
+      el.textContent = String(msg).replace(/^>\s*/, ""); // the toast's dot replaces the old ">" prompt
       el.classList.add("is-on");
       clearTimeout(toastTimer);
       toastTimer = setTimeout(function () { el.classList.remove("is-on"); }, 2400);
@@ -318,46 +330,61 @@
         return '<div class="k-qr k-qr--missing"><span>' + esc(shown || "set siteUrl") + "</span></div>";
       }
 
-      var kicker = esc(handle) + "//OS";
+      var kicker = handle ? '<span class="k-dot"></span>' + esc(handle) : "";
       var contact = "";
       if (isSet(P.email)) contact += "<li>" + esc(P.email) + "</li>";
       if (isSet(P.phone)) contact += "<li>" + esc(P.phone) + "</li>";
 
+      /* Name set editorially: first name roman, last name italic on its own line. */
+      var nm = P.name || {};
+      var nameHTML = isSet(nm.first) && isSet(nm.last)
+        ? esc(nm.first) + " <em>" + esc(nm.last) + "</em>"
+        : esc(name);
+
       var FRONT = '<div class="k-card k-front">' +
         '<div class="k-id"><div>' +
-          '<p class="k-kicker">' + kicker + "</p>" +
-          (name ? '<p class="k-name">' + esc(name) + "</p>" : "") +
+          (kicker ? '<p class="k-kicker">' + kicker + "</p>" : "") +
+          (name ? '<p class="k-name">' + nameHTML + "</p>" : "") +
+          '<span class="k-rule"></span>' +
           (isSet(P.title) ? '<p class="k-role">' + esc(P.title) + "</p>" : "") +
           (isSet(P.company) ? '<p class="k-org">' + esc(P.company) + "</p>" : "") +
           (isSet(P.companyNote) ? '<p class="k-note">' + esc(P.companyNote) + "</p>" : "") +
-        "</div><div>" +
+        "</div>" +
           (contact ? '<ul class="k-contact">' + contact + "</ul>" : "") +
-          '<p class="k-prompt"><span class="k-caret">&gt;</span> forward_pass --connect</p>' +
-        "</div></div>" +
+        "</div>" +
         '<div class="k-qrcol">' + qrSlot() + '<p class="k-host">' + esc(shown) + "</p></div>" +
       "</div>";
 
       function backCard(style) {
         return '<div class="k-card k-back"' + style + ">" + qrSlot() +
           '<div class="k-back__txt">' +
-            '<p class="k-kicker">Layer 00 // Input</p>' +
-            '<p class="k-cta">Scan to run the forward pass</p>' +
-            (handle ? '<p class="k-handle">' + esc(handle) + "</p>" : "") +
-            '<p class="k-host">' + esc(shown) + "</p>" +
+            '<p class="k-kicker">Scan &middot; connect</p>' +
+            "<div>" +
+              '<p class="k-back__host">' + esc(shown || handle) + "</p>" +
+              '<p class="k-back__line">Scan to run the forward pass.</p>' +
+            "</div>" +
+            '<div class="k-back__foot"><span class="k-rule"></span>' +
+              (handle ? '<p class="k-kicker">' + esc(handle) + "</p>" : "") + "</div>" +
           "</div></div>";
       }
 
       var STICKER = '<div class="k-sticker">' + qrSlot() +
-        '<p class="k-sticker__label">' + esc([handle, shown].filter(Boolean).join(" · ")) + "</p></div>";
+        '<p class="k-sticker__label">' +
+          (handle ? '<span><span class="k-dot"></span>' + esc(handle) + "</span>" : "") +
+          (shown ? "<span>" + esc(shown) + "</span>" : "") +
+        "</p></div>";
 
       var roleLine = [P.title, P.company].filter(isSet).map(esc).join(" &middot; ");
       var POSTER = '<div class="k-poster">' +
-        '<p class="k-kicker">' + kicker + " &middot; Layer 05 // Output</p>" +
-        (name ? '<p class="k-poster__name">' + esc(name) + "</p>" : "") +
+        '<div class="k-poster__top"><p class="k-kicker">' + kicker + '</p><p class="k-kicker">Let&rsquo;s connect</p></div>' +
+        (name ? '<p class="k-poster__name">' + nameHTML + "</p>" : "") +
+        '<span class="k-rule"></span>' +
         (roleLine ? '<p class="k-poster__role">' + roleLine + "</p>" : "") +
         qrSlot() +
-        '<p class="k-poster__cta">Scan to run the forward pass</p>' +
-        '<p class="k-poster__host">' + esc(shown) + "</p>" +
+        '<div class="k-poster__foot">' +
+          '<p class="k-poster__cta">Scan to run the forward pass.</p>' +
+          '<p class="k-poster__host">' + esc(shown) + "</p>" +
+        "</div>" +
       "</div>";
 
       function repeat(s, n) { var out = ""; for (var i = 0; i < n; i++) out += s; return out; }
@@ -474,7 +501,9 @@
       /* ---- actions ---- */
       $("printBtn").addEventListener("click", function () {
         if (placeholder && !window.confirm("siteUrl still looks like a placeholder, so the QR codes may not lead anywhere. Print anyway?")) return;
-        window.print();
+        // Wait for the web fonts so the cards never print in a fallback face.
+        var ready = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+        ready.catch(function () {}).then(function () { window.print(); });
       });
 
       var dlSvg = $("dlSvg"), dlPng = $("dlPng"), dlVcf = $("dlVcf"), copyBtn = $("copyLink"), dlLock = $("dlLock");
@@ -529,8 +558,10 @@
         var fontsReady = Promise.resolve();
         if (document.fonts && document.fonts.load) {
           fontsReady = Promise.all([
-            document.fonts.load('700 72px "Space Grotesk"'),
-            document.fonts.load('600 36px "JetBrains Mono"')
+            document.fonts.load('400 120px "Instrument Serif"'),
+            document.fonts.load('italic 400 120px "Instrument Serif"'),
+            document.fonts.load('500 32px "Geist Mono"'),
+            document.fonts.load('400 34px "Geist"')
           ]).catch(function () {});
         }
         return fontsReady.then(function () {
@@ -541,23 +572,21 @@
           canvas.width = W; canvas.height = H;
           var ctx = canvas.getContext("2d");
           if (!ctx) throw new Error("no canvas");
+          var INK = "#0B0B0C", PAPER = "#EDEAE4", DIM = "#9A968F", SIGNAL = "#FF5A1F";
+          var SERIF = '"Instrument Serif", Georgia, serif';
+          var MONO = '"Geist Mono", ui-monospace, monospace';
+          var SANS = '"Geist", system-ui, sans-serif';
 
-          // Background: deep blue-black with a soft phosphor glow behind the panel.
-          var bg = ctx.createLinearGradient(0, 0, 0, H);
-          bg.addColorStop(0, "#0b1017");
-          bg.addColorStop(0.5, "#05070a");
-          bg.addColorStop(1, "#030405");
-          ctx.fillStyle = bg;
+          // Ink field with a faint warm light from below, and a seeded film grain.
+          ctx.fillStyle = INK;
+          ctx.fillRect(0, 0, W, H);
+          var cy = 1440; // QR centre: clear of the clock above and the shortcuts below
+          var warm = ctx.createRadialGradient(W / 2, H * 0.92, 40, W / 2, H * 0.92, 1500);
+          warm.addColorStop(0, "rgba(255,90,31,0.14)");
+          warm.addColorStop(1, "rgba(255,90,31,0)");
+          ctx.fillStyle = warm;
           ctx.fillRect(0, 0, W, H);
 
-          var cy = 1470; // panel centre: clear of the clock above and the shortcuts below
-          var glow = ctx.createRadialGradient(W / 2, cy, 60, W / 2, cy, 950);
-          glow.addColorStop(0, "rgba(57,255,156,0.18)");
-          glow.addColorStop(1, "rgba(57,255,156,0)");
-          ctx.fillStyle = glow;
-          ctx.fillRect(0, 0, W, H);
-
-          // Neural mesh (seeded so every export looks the same).
           var seed = 0x6a6b;
           function rand() {
             seed = (seed + 0x6d2b79f5) | 0;
@@ -565,38 +594,23 @@
             t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
             return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
           }
-          var nodes = [];
-          for (var i = 0; i < 80; i++) nodes.push([rand() * W, rand() * H]);
-          ctx.lineWidth = 2;
-          for (var a = 0; a < nodes.length; a++) {
-            for (var b = a + 1; b < nodes.length; b++) {
-              var dx = nodes[a][0] - nodes[b][0], dy = nodes[a][1] - nodes[b][1];
-              var dist = Math.sqrt(dx * dx + dy * dy);
-              if (dist < 260) {
-                ctx.strokeStyle = "rgba(57,255,156," + (0.16 * (1 - dist / 260)).toFixed(3) + ")";
-                ctx.beginPath(); ctx.moveTo(nodes[a][0], nodes[a][1]); ctx.lineTo(nodes[b][0], nodes[b][1]); ctx.stroke();
-              }
-            }
+          for (var g = 0; g < 26000; g++) {
+            ctx.fillStyle = rand() > 0.5 ? "rgba(237,234,228,0.05)" : "rgba(0,0,0,0.25)";
+            ctx.fillRect(Math.floor(rand() * W), Math.floor(rand() * H), 2, 2);
           }
-          ctx.fillStyle = "rgba(57,255,156,0.55)";
-          nodes.forEach(function (n) { ctx.beginPath(); ctx.arc(n[0], n[1], 4, 0, Math.PI * 2); ctx.fill(); });
 
-          // Scanlines.
-          ctx.fillStyle = "rgba(255,255,255,0.018)";
-          for (var y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+          // Hairline rule under the label row.
+          ctx.fillStyle = "rgba(237,234,228,0.14)";
+          ctx.fillRect(90, 1010, W - 180, 2);
 
-          // QR panel: light field, dark modules, 4-module quiet zone, whole-pixel modules.
+          // QR tile: light field, dark modules, 4-module quiet zone, whole-pixel modules.
           var total = m.size + 8;
-          var unit = Math.floor(720 / total);
-          var qrPx = unit * total, pad = 24, panel = qrPx + pad * 2;
+          var unit = Math.floor(700 / total);
+          var qrPx = unit * total, pad = 20, panel = qrPx + pad * 2;
           var px = Math.round((W - panel) / 2), py = Math.round(cy - panel / 2);
-          ctx.save();
-          ctx.shadowColor = "rgba(57,255,156,0.55)";
-          ctx.shadowBlur = 70;
           ctx.fillStyle = "#ffffff";
-          roundRect(ctx, px, py, panel, panel, 28);
+          roundRect(ctx, px, py, panel, panel, 36);
           ctx.fill();
-          ctx.restore();
           ctx.fillStyle = "#000000";
           var ox = px + pad + 4 * unit, oy = py + pad + 4 * unit;
           for (var r = 0; r < m.size; r++) {
@@ -605,29 +619,59 @@
             }
           }
 
-          // Text.
-          ctx.textAlign = "center";
+          // Label above the rule: "SCAN TO CONNECT" left, handle right.
+          var maxW = W - 180;
           ctx.textBaseline = "alphabetic";
-          var maxW = W - 160;
-          ctx.font = '600 34px "JetBrains Mono", ui-monospace, monospace';
-          ctx.fillStyle = "#39ff9c";
-          ctx.fillText("> SCAN TO RUN THE FORWARD PASS", W / 2, py - 56, maxW);
-          var ty = py + panel + 120;
-          if (name) {
-            ctx.font = '700 72px "Space Grotesk", system-ui, sans-serif';
-            ctx.fillStyle = "#ffffff";
-            ctx.fillText(name, W / 2, ty, maxW);
-            ty += 72;
+          ctx.font = "500 30px " + MONO;
+          ctx.fillStyle = DIM;
+          ctx.textAlign = "left";
+          ctx.fillText("SCAN TO CONNECT", 90, 980);
+          ctx.textAlign = "right";
+          if (handle) ctx.fillText(handle.toUpperCase(), W - 90, 980);
+          ctx.fillStyle = SIGNAL;
+          ctx.beginPath(); ctx.arc(W - 90 - (handle ? ctx.measureText(handle.toUpperCase()).width : 0) - 26, 970, 8, 0, Math.PI * 2); ctx.fill();
+
+          // Name: first roman, last italic, centered as one line.
+          ctx.textAlign = "left";
+          var ty = py + panel + 190;
+          var nm = P.name || {};
+          var first = isSet(nm.first) ? String(nm.first) : name;
+          var last = isSet(nm.first) && isSet(nm.last) ? " " + String(nm.last) : "";
+          if (first) {
+            var size = 124;
+            ctx.font = "400 " + size + "px " + SERIF;
+            var w1 = ctx.measureText(first).width;
+            ctx.font = "italic 400 " + size + "px " + SERIF;
+            var w2 = ctx.measureText(last).width;
+            var k = Math.min(1, maxW / (w1 + w2));
+            size = Math.floor(size * k);
+            ctx.font = "400 " + size + "px " + SERIF;
+            w1 = ctx.measureText(first).width;
+            ctx.font = "italic 400 " + size + "px " + SERIF;
+            w2 = ctx.measureText(last).width;
+            var x0 = (W - w1 - w2) / 2;
+            ctx.fillStyle = PAPER;
+            ctx.font = "400 " + size + "px " + SERIF;
+            ctx.fillText(first, x0, ty);
+            ctx.font = "italic 400 " + size + "px " + SERIF;
+            ctx.fillText(last, x0 + w1, ty);
+            ty += 64;
           }
-          ctx.font = '600 40px "JetBrains Mono", ui-monospace, monospace';
-          ctx.fillStyle = "#39ff9c";
-          ctx.fillText(shown, W / 2, ty, maxW);
+          // Single accent rule.
+          ctx.fillStyle = SIGNAL;
+          ctx.fillRect(W / 2 - 50, ty, 100, 4);
+          ty += 80;
+          ctx.textAlign = "center";
           var sub = [P.title, P.company].filter(isSet).join(" · ");
           if (sub) {
-            ctx.font = '400 32px "JetBrains Mono", ui-monospace, monospace';
-            ctx.fillStyle = "#8a98a8";
-            ctx.fillText(sub, W / 2, ty + 58, maxW);
+            ctx.font = "400 36px " + SANS;
+            ctx.fillStyle = DIM;
+            ctx.fillText(sub, W / 2, ty, maxW);
+            ty += 70;
           }
+          ctx.font = "500 38px " + MONO;
+          ctx.fillStyle = PAPER;
+          ctx.fillText(shown, W / 2, ty, maxW);
           return canvas;
         });
       }
