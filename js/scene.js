@@ -21,10 +21,17 @@
  *   pulse()           brief brightening of the attention arcs
  *   setAccent(css)    any CSS color; also auto-read from --signal on
  *                     html[data-theme|style|class] changes
+ *   setHeroDim(v)     0..1, dims the hero core (behind the hero video/poster)
  *   pause(), resume(), staticFrame()
+ *   frames            rendered-frame counter (read-only, for QA)
  * }
  * Fires document event "gunr:scene-ready". On missing WebGL2 / load failure
  * adds html.no-webgl and defines nothing. Honors window.GUNR_MOTION.full.
+ *
+ * Reduced motion runs an AMBIENT loop instead of a still: quarter-speed drift and
+ * twinkle, no pointer/gyro parallax, no camera dolly or burst, ~30fps cap. A
+ * section change cross-fades the field (dip out, swap the shape unseen, rise in)
+ * rather than flying particles across the screen.
  * ========================================================================== */
 
 const root = document.documentElement;
@@ -43,6 +50,9 @@ function motionFull() {
     const q = new URLSearchParams(location.search).get('motion');
     if (q === 'full') return true;
     if (q === 'reduced') return false;
+    const s = localStorage.getItem('gunr.motion');
+    if (s === 'full') return true;
+    if (s === 'reduced') return false;
   } catch (e) { /* ignore */ }
   return !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
@@ -74,6 +84,7 @@ if (!canvas) {
 
 function init(THREE) {
   const FULL = motionFull();
+  const AMB = !FULL; // ambient loop (reduced motion)
 
   /* ---- device tier -------------------------------------------------------- */
   const mm = (q) => !!(window.matchMedia && matchMedia(q).matches);
@@ -538,7 +549,10 @@ function init(THREE) {
   let sectionDriven = false;
   let time = FULL ? 0 : 14.0;
   let spin = 0.6, burstT = 100, fade = FULL ? 0 : 1;
-  let offsetX = 0, offsetY = 0, repel = 0, pulse = 0, lastStaticSec = -1;
+  let offsetX = 0, offsetY = 0, repel = 0, pulse = 0;
+  let frames = 0, heroDim = 0, targetHeroDim = 0;
+  // Ambient cross-fade: xfade 1 = visible; pendingSec >= 0 while a swap is queued.
+  let xfade = 1, pendingSec = -1, snapLayout = false;
   const par = { x: 0, y: 0, tx: 0, ty: 0 };
   const ndc = new THREE.Vector2(0, 0);
   let pointerOn = false;
@@ -559,15 +573,17 @@ function init(THREE) {
   };
   const weight = (i, x) => Math.max(0, 1 - Math.abs(x - i));
 
-  /* ---- input -------------------------------------------------------------- */
-  window.addEventListener('pointermove', (e) => {
-    ndc.set((e.clientX / view.w) * 2 - 1, -(e.clientY / view.h) * 2 + 1);
-    par.tx = ndc.x; par.ty = ndc.y;
-    pointerOn = e.pointerType === 'mouse' || e.pointerType === 'pen';
-  }, { passive: true });
-  root.addEventListener('pointerleave', () => { pointerOn = false; par.tx = 0; par.ty = 0; });
-  window.addEventListener('blur', () => { pointerOn = false; });
-  if (coarse) {
+  /* ---- input (full motion only: ambient mode ignores pointer and gyro) ----- */
+  if (FULL) {
+    window.addEventListener('pointermove', (e) => {
+      ndc.set((e.clientX / view.w) * 2 - 1, -(e.clientY / view.h) * 2 + 1);
+      par.tx = ndc.x; par.ty = ndc.y;
+      pointerOn = e.pointerType === 'mouse' || e.pointerType === 'pen';
+    }, { passive: true });
+    root.addEventListener('pointerleave', () => { pointerOn = false; par.tx = 0; par.ty = 0; });
+    window.addEventListener('blur', () => { pointerOn = false; });
+  }
+  if (FULL && coarse) {
     window.addEventListener('deviceorientation', (e) => {
       if (e.gamma == null || e.beta == null) return;
       par.tx = Math.max(-1, Math.min(1, e.gamma / 30));
@@ -615,10 +631,27 @@ function init(THREE) {
   const rayDir = new THREE.Vector3();
 
   function update(dt, snap) {
-    time += dt;
-    const ease = (rate) => (snap ? 1 : 1 - Math.exp(-dt * rate));
+    // Ambient mode: the field's clock runs at a quarter speed (drift, twinkle, waves).
+    time += dt * (AMB ? 0.25 : 1);
 
-    if (!sectionDriven) targetPos = targetPageP * 5;
+    if (AMB) {
+      // Cross-fade: dip out over ~300ms, swap the shape while invisible, rise back in.
+      // A snapped (static) frame swaps at once and stays visible.
+      if (pendingSec >= 0) {
+        xfade = snap ? 0 : Math.max(0, xfade - dt / 0.3);
+        if (xfade === 0) {
+          pos = targetPos = pendingSec;
+          pendingSec = -1;
+          snapLayout = true;
+          if (snap) xfade = 1;
+        }
+      } else {
+        xfade = snap ? 1 : Math.min(1, xfade + dt / 0.3);
+      }
+    } else if (!sectionDriven) targetPos = targetPageP * 5;
+    // snapLayout: offsets jump with the unseen swap so nothing travels across the screen.
+    const ease = (rate) => (snap || snapLayout ? 1 : 1 - Math.exp(-dt * rate));
+
     pos += (targetPos - pos) * ease(2.2);
     if (Math.abs(targetPos - pos) < 1e-4) pos = targetPos;
     secT += (targetSecT - secT) * ease(3);
@@ -630,7 +663,7 @@ function init(THREE) {
     uniforms.uMix.value = from >= 5 ? 0 : pos - from;
 
     uniforms.uTime.value = time;
-    spin += dt * 0.07;
+    spin += dt * (AMB ? 0.02 : 0.07);
     uniforms.uSpin.value = spin;
     uniforms.uBreath.value = 0.03 * Math.sin(time * 1.15) * weight(0, pos);
     uniforms.uSlide.value = (secT - 0.5) * 0.7 * weight(3, pos);
@@ -638,7 +671,7 @@ function init(THREE) {
     burstT += dt;
     uniforms.uBurst.value = burstT;
     fade = snap ? 1 : Math.min(1, fade + dt / 1.4);
-    uniforms.uFade.value = fade * fade * (3 - 2 * fade);
+    uniforms.uFade.value = fade * fade * (3 - 2 * fade) * (AMB ? xfade * xfade * (3 - 2 * xfade) : 1);
 
     // Base tint drifts with the layer.
     const ti = Math.min(5, Math.floor(pos)), tj = Math.min(5, ti + 1);
@@ -659,14 +692,17 @@ function init(THREE) {
     offsetY += (tOffY - offsetY) * ease(2.5);
     group.position.y = offsetY;
     pulse = snap ? 0 : Math.max(0, pulse - dt / 0.6);
-    uniforms.uDim.value = lerpArr(small ? DIM_SMALL : DIM, pos) * (1 + 0.4 * weight(5, pos));
+    // Hero media (video/poster) on top: the core steps back so the two don't fight.
+    heroDim += (targetHeroDim - heroDim) * ease(1.5);
+    uniforms.uDim.value = lerpArr(small ? DIM_SMALL : DIM, pos) * (1 + 0.4 * weight(5, pos)) *
+      (1 - 0.45 * heroDim * weight(0, pos));
     par.x += (par.tx - par.x) * ease(2.2);
     par.y += (par.ty - par.y) * ease(2.2);
     const calm = 1 - 0.6 * weight(5, pos);
     group.rotation.y = par.x * 0.2 * calm + Math.sin(time * 0.11) * 0.06 * calm;
     group.rotation.x = -par.y * 0.12 * calm + Math.sin(time * 0.083) * 0.04 * calm;
 
-    camera.position.z = CAM_Z - 0.55 * Math.sin(pageP * Math.PI);
+    camera.position.z = AMB ? CAM_Z : CAM_Z - 0.55 * Math.sin(pageP * Math.PI);
     uniforms.uFocus.value = camera.position.z;
     group.updateMatrixWorld();
 
@@ -686,23 +722,31 @@ function init(THREE) {
     const w2 = smooth(0.15, 1, weight(2, pos));
     lineUniforms.uOpacity.value = w2 * uniforms.uFade.value * (1 + 0.8 * pulse);
     lines.visible = w2 > 0.002;
+    snapLayout = false;
+  }
+
+  function draw() {
+    renderer.render(scene, camera);
+    frames++;
   }
 
   function renderOnce() {
     update(0, true);
-    renderer.render(scene, camera);
+    draw();
   }
 
   let raf = 0, running = false, manualPause = false, last = 0;
   function frame(now) {
     raf = requestAnimationFrame(frame);
+    // Ambient mode is capped at ~30fps; nothing in it moves fast enough to need more.
+    if (AMB && last && now - last < 31) return;
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
     last = now;
     update(dt, false);
-    renderer.render(scene, camera);
+    draw();
   }
   function start() {
-    if (!FULL || running || manualPause || document.hidden) return;
+    if (running || manualPause || document.hidden) return;
     running = true; last = 0;
     raf = requestAnimationFrame(frame);
   }
@@ -713,7 +757,7 @@ function init(THREE) {
 
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else start(); });
   canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); stop(); }, false);
-  canvas.addEventListener('webglcontextrestored', () => { if (FULL) start(); else renderOnce(); }, false);
+  canvas.addEventListener('webglcontextrestored', () => { renderOnce(); start(); }, false);
 
   /* ---- public API --------------------------------------------------------- */
   const api = {
@@ -726,10 +770,14 @@ function init(THREE) {
       i = Math.max(0, Math.min(5, Math.round(+i || 0)));
       t = clamp01(t == null ? 0 : +t);
       sectionDriven = true;
-      if (!FULL) {
-        // Reduced motion: one still frame per section, never a scroll-linked morph.
-        targetSecT = 0; targetPos = i;
-        if (i !== lastStaticSec) { lastStaticSec = i; renderOnce(); }
+      if (AMB) {
+        // Ambient: never a scroll-linked morph; a new section cross-fades the field.
+        targetSecT = 0;
+        const cur = pendingSec >= 0 ? pendingSec : Math.round(targetPos);
+        if (i !== cur) {
+          pendingSec = i;
+          if (!running) renderOnce();
+        }
         return;
       }
       targetSecT = t;
@@ -745,9 +793,15 @@ function init(THREE) {
       if (FULL) pulse = 1;
     },
     setAccent,
+    setHeroDim(v) {
+      targetHeroDim = clamp01(+v || 0);
+      if (!running) renderOnce();
+    },
     pause() { manualPause = true; stop(); },
-    resume() { manualPause = false; if (FULL) start(); else renderOnce(); },
-    staticFrame() { renderOnce(); }
+    resume() { manualPause = false; start(); if (!running) renderOnce(); },
+    // Kept for callers from the static-frame era; a running loop already draws.
+    staticFrame() { if (!running) renderOnce(); },
+    get frames() { return frames; }
   };
   window.GUNR_SCENE = api;
 
@@ -757,7 +811,8 @@ function init(THREE) {
   } catch (e) { /* ignore */ }
   resize();
   booted = true;
-  if (FULL) start(); else renderOnce();
+  if (!FULL) renderOnce(); // the first ambient frame shows at once (no fade-in)
+  start();
 
   // Re-sample the word once the brand font is available.
   if (document.fonts && document.fonts.load) {

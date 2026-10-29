@@ -172,6 +172,52 @@ html.no-webgl .scene { display: none; }
   100% { transform: translate(0, 0); }
 }
 
+/* Hero media: optional loop/poster over the canvas, under the content. Absolute in the
+   page (scrolls with the hero); screen blend drops its black so it merges with the
+   particles. Desktop: full width so a 16:9 asset is not cropped; its own black left
+   45% sits behind the name, with a soft fade toward the left and the bottom.
+   Phones: full-bleed upper area, fading out downward. Invisible until media loads. */
+.hero-media {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 1.2s var(--ease-out);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 40%), linear-gradient(to bottom, #000 58%, transparent 96%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent 0%, #000 40%), linear-gradient(to bottom, #000 58%, transparent 96%);
+  mask-composite: intersect;
+}
+.hero-media.is-in { opacity: .9; }
+.hero-media.is-portrait {
+  left: 0;
+  width: 100%;
+  height: 72vh;
+  height: 72svh;
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+}
+.hero-media-in { position: absolute; inset: 0; transform-origin: 60% 40%; }
+.hero-media img, .hero-media video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 100% 50%; /* a crop trims the empty left side, not the subject */
+}
+.hero-media.is-portrait img, .hero-media.is-portrait video { object-position: 50% 0; } /* top-weighted subject */
+.hm-video { opacity: 0; transition: opacity 1.2s var(--ease-out); }
+.hm-video.is-ready { opacity: 1; }
+.no-js .hero-media { display: none; }
+
 .app { position: relative; z-index: 2; }
 
 /* ---- Loader --------------------------------------------------------------- */
@@ -296,8 +342,13 @@ html.no-webgl .scene { display: none; }
 }
 .topbar-idx { color: var(--signal); font-variant-numeric: tabular-nums; }
 .topbar-name { display: inline-block; min-width: 9ch; color: var(--paper); }
-.topbar-cta {
+.topbar-end {
   justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.4vw, 32px);
+}
+.topbar-cta {
   padding: 6px 0;
   font: 500 11px var(--f-mono);
   letter-spacing: .14em;
@@ -316,6 +367,60 @@ html.no-webgl .scene { display: none; }
   transform: scaleX(0);
   transform-origin: 0 50%;
 }
+
+/* ---- Motion switch -------------------------------------------------------- */
+/* role="switch"; the pill reads the html motion class so it is right before JS syncs
+   aria-checked. Tap area is the whole 44px-tall button. */
+.motion-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--paper-dim);
+  font: 500 11px var(--f-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color .3s;
+  -webkit-tap-highlight-color: transparent;
+}
+.motion-toggle:hover, .motion-toggle:focus-visible { color: var(--paper); }
+.mt-pill {
+  position: relative;
+  flex: none;
+  width: 28px; height: 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  outline: 1px solid transparent;
+  outline-offset: 2px;
+  transition: background-color .3s, border-color .3s;
+}
+.mt-pill i {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--paper-dim);
+  transition: transform .35s var(--ease-out), background-color .3s;
+}
+.motion-full .mt-pill { background: var(--signal); border-color: var(--signal); }
+.motion-full .mt-pill i { background: var(--ink); transform: translateX(12px); }
+.motion-toggle:hover .mt-pill { border-color: var(--paper); }
+/* Hint: the outline pulses twice (opacity + offset only, no movement of content). */
+.motion-toggle.is-hint { color: var(--paper); }
+.motion-toggle.is-hint .mt-pill { animation: mt-hint 1.1s ease-out 2; }
+@keyframes mt-hint {
+  0% { outline-color: var(--signal); outline-offset: 2px; }
+  100% { outline-color: transparent; outline-offset: 8px; }
+}
+.foot-motion { display: none; }
+.no-js .motion-toggle { display: none; }
+
+/* Switching motion mode: the page fades out for 250ms, then reloads. */
+html.motion-switching body { opacity: 0; transition: opacity .25s ease; }
 
 /* ---- Section index (desktop) ---------------------------------------------- */
 .index {
@@ -981,7 +1086,21 @@ html.no-webgl .scene { display: none; }
   transition: opacity .4s, transform .6s var(--ease-out);
 }
 .toast:empty { display: none; }
+.toast.is-long {
+  width: max-content;
+  max-width: min(440px, calc(100vw - 32px));
+  padding: 14px 20px;
+  border-radius: 14px;
+  text-align: center;
+  line-height: 1.6;
+}
 .toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+/* The long hint sits under the top bar, next to the switch it points at and clear of
+   the hero CTAs. Below 360px the switch lives in the footer, so it stays at the bottom. */
+@media (min-width: 360px) {
+  .toast.is-long, .dock-on .toast.is-long { top: 76px; bottom: auto; transform: translate(-50%, -8px); }
+  .toast.is-long.is-on { transform: translate(-50%, 0); }
+}
 .dock-on .toast { bottom: calc(92px + env(safe-area-inset-bottom)); }
 
 /* ---- Terminal toggle ------------------------------------------------------ */
@@ -1087,7 +1206,8 @@ html.no-webgl .scene { display: none; }
 /* ---- Breakpoints ---------------------------------------------------------- */
 @media (max-width: 599.98px) {
   .topbar-cta { display: none; }
-  .topbar { grid-template-columns: 1fr auto; }
+  .topbar { grid-template-columns: auto 1fr auto; gap: 12px; }
+  .topbar-layer { justify-self: center; }
   .topbar-name { min-width: 0; }
   .hero-top { flex-direction: column; gap: 6px; }
   .hero-loc { text-align: left; }
@@ -1167,4 +1287,10 @@ html.no-webgl .scene { display: none; }
 .index:hover, .index:focus-within { opacity: 1; }
 @media (max-width: 399.98px) {
   .btn { padding: 0 16px; }
+}
+/* No room in the top bar on the narrowest phones: the switch moves to the footer. */
+@media (max-width: 359.98px) {
+  .topbar-end { display: none; }
+  .topbar { grid-template-columns: 1fr auto; }
+  .foot-motion { display: inline-flex; }
 }

@@ -222,6 +222,7 @@
       ["copy <email|url>", "copy to clipboard"],
       ["goto <layer>", "jump to a layer: input … output"],
       ["theme <name>", "accent: " + THEMES.join(" | ")],
+      ["motion <on|off>", "background animation (saved; 'motion' for status)"],
       ["clear", "clear the screen"],
       ["exit", "close the terminal (or Esc)"]
     ];
@@ -491,6 +492,27 @@
     if (!applyTheme(name, true)) { err("theme: unknown '" + raw + "' (" + THEMES.join(" | ") + ")"); return; }
     out("> accent set to " + name + (name !== raw ? " (" + raw + " is now " + name + ")" : ""), "term-acc");
     toast("> theme: " + name);
+  }
+
+  /* motion on|off|status — same path as the top-bar switch: GUNR_MOTION.set() saves
+     the choice and reloads (loader skipped). */
+  function cmdMotion(args) {
+    var M = window.GUNR_MOTION;
+    var a = (args[0] || "status").toLowerCase();
+    var SRC = { url: "from ?motion= in the URL", stored: "your saved choice", system: "your system setting" };
+    if (a === "status") {
+      if (!M) { out("motion: unknown", "term-dim"); return; }
+      outH("motion: " + '<span class="term-acc">' + (M.full ? "on" : "off") + "</span> " +
+        '<span class="term-dim">(' + esc(SRC[M.source] || "default") + ")</span> · " +
+        cmdButton("motion " + (M.full ? "off" : "on"), "turn " + (M.full ? "off" : "on")));
+      return;
+    }
+    var want = a === "on" || a === "full" ? true : a === "off" || a === "reduced" ? false : null;
+    if (want === null) { err("usage: motion on|off|status"); return; }
+    if (!M || !M.set) { err("motion: switch unavailable"); return; }
+    if (want === M.full && M.source !== "url") { out("motion is already " + (want ? "on" : "off") + ".", "term-dim"); return; }
+    out("> motion " + (want ? "on" : "off") + " · reloading…", "term-acc");
+    later(function () { M.set(want ? "full" : "reduced"); }, 400);
   }
 
   function cmdClear() { el.out.innerHTML = ""; }
@@ -782,6 +804,7 @@
     "copy": { run: cmdCopy, args: function () { return ["email", "url"]; } },
     "goto": { run: cmdGoto, args: function () { return LAYERS.map(function (L) { return L.key; }); } },
     "theme": { run: cmdTheme, args: function () { return THEMES.slice(); } },
+    "motion": { run: cmdMotion, args: function () { return ["on", "off", "status"]; } },
     "clear": { run: cmdClear },
     "exit": { run: cmdExit },
     "sudo": { run: cmdSudo, args: function () { return ["hire gunnar"]; } },
