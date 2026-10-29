@@ -1,5 +1,8 @@
 # assets/
 
+> **v2 note:** the current design uses only `og.png` (social link preview; re-enable its tags in
+> `index.html` once it exists). The other slots below belonged to v1 and are not read by the site.
+
 Optional generated media. **Every file is optional.** The site has CSS/canvas fallbacks and reveals media
 only after it loads, so a missing file never shows a broken icon. Filenames are a contract with
 `js/content.js` → `PROFILE.assets`. Keep them exact (lower-case, hyphens).

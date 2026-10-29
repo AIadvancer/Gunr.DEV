@@ -198,22 +198,39 @@
       "</div></section>";
   }
 
+  /* First sentence of a paragraph. A sentence end needs 2+ non-dot chars before the
+   * punctuation, so initials ("Gunnar J.") and abbreviations ("e.g.") don't end it. */
+  function firstSentence(s) {
+    const m = String(s).match(/^[\s\S]*?[^\s.]{2}[.!?]+(?=\s|$)/);
+    return m ? m[0].trim() : String(s).trim();
+  }
+
+  /* Pull quote: optional PROFILE.pullQuote, else the bio's opening sentence when it is
+   * short enough for display type (then trimmed from the paragraph so it isn't shown
+   * twice), else the tagline. */
   function pullQuote() {
-    // First bio sentence (the hero already shows the tagline); tagline only as fallback.
-    let src = "";
-    const b = arr(P.bio).find(isSet);
-    if (b) src = (String(b).match(/^[^.!?]+[.!?]/) || [String(b)])[0];
+    let src = "", fromBio = false;
+    if (isSet(P.pullQuote)) src = String(P.pullQuote);
+    if (!src) {
+      const b = arr(P.bio).find(isSet);
+      const s = b ? firstSentence(b) : "";
+      if (s && s.split(/\s+/).length <= 14) { src = s; fromBio = s.length < String(b).trim().length; }
+    }
     if (!src && isSet(P.tagline)) src = String(P.tagline);
-    if (!src) return "";
+    if (!src) return { html: "", fromBio: false };
     const words = src.trim().split(/\s+/);
     const lastWord = words.pop();
-    return (words.length ? esc(words.join(" ")) + " " : "") + "<em>" + esc(lastWord) + "</em>";
+    return { html: (words.length ? esc(words.join(" ")) + " " : "") + "<em>" + esc(lastWord) + "</em>", fromBio };
   }
 
   function renderEmbedding() {
     const L = LAYERS[1];
+    const pq = pullQuote();
+    const quote = pq.html;
     // Unfilled paragraphs are left out entirely; they read as template copy.
     const bio = arr(P.bio).filter(isSet)
+      .map((p, i) => (i === 0 && pq.fromBio ? String(p).trim().slice(firstSentence(p).length).trim() : p))
+      .filter(Boolean)
       .map((p) => '<p data-lines>' + esc(p) + "</p>").join("");
     const norm = Math.sqrt(traits.reduce((s, t) => s + Math.pow(clamp(+t.value || 0, 0, 1), 2), 0));
     const rows = traits.map((t, k) => {
@@ -224,7 +241,6 @@
         '<span class="vec-bar" aria-hidden="true"><i></i></span></li>';
     }).join("");
     const firstName = isSet(N.first) ? esc(N.first) : esc(HANDLE);
-    const quote = pullQuote();
 
     return '<section id="' + L.id + '" class="layer layer--embedding" data-layer="1" aria-labelledby="h-embedding">' +
       '<div class="wrap">' + secHead(L, 1, "About <em>" + firstName + "</em>") +
@@ -283,10 +299,17 @@
       "</div></section>";
   }
 
-  function fmtYear(v, isEnd) {
-    if (isSet(v)) return /^present$/i.test(String(v)) ? "Present" : esc(v);
-    if (isPh(v)) return '<span class="ph">' + esc(stripPh(v)) + "</span>";
-    return isEnd ? "Present" : "&mdash;";
+  /* Year text; placeholders and blanks render as nothing so no template copy shows. */
+  function fmtYear(v) {
+    if (!isSet(v)) return "";
+    return /^present$/i.test(String(v)) ? "Present" : esc(v);
+  }
+
+  function fmtRange(e) {
+    const a = fmtYear(e.start), b = fmtYear(e.end);
+    if (a && b) return a + " &ndash; " + b;
+    if (b) return b === "Present" ? "&rarr; Present" : b;
+    return a ? a + " &ndash; Present" : "";
   }
 
   function epochLoss(e, k, n) {
@@ -299,7 +322,8 @@
     const n = experience.length;
     const cards = experience.map((e, k) => {
       const hl = arr(e.highlights).filter(isSet).map((h) => "<li>" + esc(h) + "</li>").join("");
-      const dates = isSet(e.start) || isSet(e.end) ? "<span>" + fmtYear(e.start) + " &ndash; " + fmtYear(e.end, true) + "</span>" : "";
+      const range = fmtRange(e);
+      const dates = range ? "<span>" + range + "</span>" : "";
       const loss = epochLoss(e, k, n);
       const ft = e.event === "fine-tune" ? ' <span class="tag label">fine-tune</span>' : "";
       return '<article class="epoch" data-epoch data-loss="' + loss.toFixed(3) + '">' +
@@ -410,6 +434,7 @@
       "<span>&copy; " + new Date().getFullYear() + " " + esc(NAME) + "</span>" +
       '<a class="u-link" href="card.html">Print networking cards</a>' +
       '<span class="foot-term">Press <kbd>`</kbd> for terminal</span>' +
+      '<button type="button" class="u-link foot-term-btn" data-term-open>Open terminal</button>' +
       '<a class="u-link" href="#layer-input">Back to top &uarr;</a></div>';
   }
 
@@ -678,11 +703,13 @@
     const r = research[q];
     const map = {};
     if (r) attnWeights(r).forEach((c) => { map[c.k.toLowerCase()] = c.w; });
+    let lit = 0;
     cloudChips.forEach((li) => {
       const w = map[li.getAttribute("data-chip")];
       const on = w !== undefined;
       li.classList.toggle("is-on", on);
       li.style.setProperty("--w", on ? w.toFixed(3) : "0");
+      li.style.setProperty("--i", on ? String(lit++) : "0"); // lights chips in sequence
       const b = li.querySelector("b");
       if (b) b.textContent = on ? w.toFixed(2).replace(/^0/, "") : "";
     });
@@ -1077,24 +1104,32 @@
     const ry = gsap.quickTo(ring, "y", { duration: 0.5, ease: "power3.out" });
     const dx = gsap.quickTo(dot, "x", { duration: 0.08, ease: "power3.out" });
     const dy = gsap.quickTo(dot, "y", { duration: 0.08, ease: "power3.out" });
-    let shown = false;
+    let shown = false, lx = -1, ly = -1, scrollQueued = false;
     window.addEventListener("pointermove", (e) => {
       if (e.pointerType !== "mouse") return;
+      lx = e.clientX; ly = e.clientY;
       if (!shown) { shown = true; c.classList.add("is-on"); gsap.set([ring, dot], { x: e.clientX, y: e.clientY }); }
       rx(e.clientX); ry(e.clientY); dx(e.clientX); dy(e.clientY);
     }, { passive: true });
     doc.documentElement.addEventListener("pointerleave", () => { shown = false; c.classList.remove("is-on"); });
     doc.addEventListener("pointerdown", () => c.classList.add("is-down"));
     doc.addEventListener("pointerup", () => c.classList.remove("is-down"));
-    doc.addEventListener("pointerover", (e) => {
-      const el = e.target.closest && e.target.closest("a, button, [data-cursor], input, textarea");
+    const sync = (target) => {
+      const el = target && target.closest && target.closest("a, button, [data-cursor], input, textarea");
       const isText = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA");
       c.classList.toggle("is-hover", !!el && !isText);
       c.classList.toggle("is-text", !!isText);
       const lab = el && el.getAttribute("data-cursor");
       label.textContent = lab || "";
       c.classList.toggle("has-label", !!lab);
-    });
+    };
+    doc.addEventListener("pointerover", (e) => sync(e.target));
+    // Content can scroll under a still pointer without boundary events; re-check once per frame.
+    window.addEventListener("scroll", () => {
+      if (scrollQueued || !shown || lx < 0) return;
+      scrollQueued = true;
+      requestAnimationFrame(() => { scrollQueued = false; sync(doc.elementFromPoint(lx, ly)); });
+    }, { passive: true });
   }
 
   /* Magnetic buttons: pull toward the pointer, at most ~10px. */
