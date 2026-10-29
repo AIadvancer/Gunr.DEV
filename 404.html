@@ -93,11 +93,16 @@
     :focus-visible { outline: 1px solid var(--signal); outline-offset: 4px; }
     footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); padding-top: 20px; }
     @media (max-width: 599.98px) { .btn { flex: 1 1 100%; } footer span:last-child { display: none; } }
-    @media (prefers-reduced-motion: reduce) {
-      body::after, h1 span > span { animation: none; }
-    }
+    /* Same motion contract as the site: ?motion=full|reduced, else the OS setting. */
+    .motion-reduced body::after, .motion-reduced h1 span > span { animation: none; }
   </style>
   <script>
+    (function () {
+      var q = /[?&]motion=(full|reduced)\b/.exec(location.search);
+      var full = q ? q[1] === "full" : !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+      window.GUNR_MOTION = { full: full };
+      if (!full) document.documentElement.classList.add("motion-reduced");
+    })();
     try {
       var t = { green: "lime", amber: "signal", cyan: "cyan", lime: "lime", signal: "signal" }[localStorage.getItem("gunr.theme")];
       if (t) document.documentElement.setAttribute("data-theme", t);

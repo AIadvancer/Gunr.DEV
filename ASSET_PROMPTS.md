@@ -2,6 +2,9 @@
 
 Guide for making every optional media file in `assets/` on a local 24 GB GPU.
 
+> **v2 note:** the current "Forward Pass" design renders its visuals in code and only uses `assets/og.png`
+> (section 3.4). The other slots were for v1 and are not read by the site; generating them changes nothing.
+
 **All of these files are optional.** Every slot has a CSS or canvas fallback. The site shows a file only
 after it loads (`onload` / `canplay`), so a missing file never shows a broken image. Add the files one at a
 time, in the priority order below, and reload after each one.

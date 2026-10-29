@@ -316,16 +316,11 @@ html.term-open body { overflow: hidden; }
   animation: none;
 }
 
-/* Keyboard focus ring on the prompt row. The plain :focus-within rule is the
-   fallback; where :has() works, the ring is limited to keyboard focus. */
-.term__field:focus-within {
-  outline: 1px solid var(--term-accent);
-  outline-offset: 6px;
-  border-radius: 2px;
-}
-@supports selector(:has(*)) {
-  .term__field:focus-within:not(:has(.term__input:focus-visible)) { outline: none; }
-}
+/* Focus reads through the prompt and the solid blinking block, not a box:
+   a terminal is one surface with a caret. */
+.term__input:focus, .term__input:focus-visible { outline: none; box-shadow: none; }
+.term__prompt { transition: color .3s; }
+.term__line:focus-within .term__prompt { color: var(--term-accent); }
 
 @keyframes term-blink {
   0%, 100% { opacity: 1; }

@@ -136,13 +136,21 @@
     overlay.classList.add("is-leaving");
 
     if (gsap) {
-      var tl = gsap.timeline({ onComplete: finish });
+      // A 1px signal line rides the curtain's leading edge so the wipe reads as deliberate.
+      var edge = doc.createElement("i");
+      edge.className = "boot-edge";
+      edge.setAttribute("aria-hidden", "true");
+      doc.body.appendChild(edge);
+      var tl = gsap.timeline({ onComplete: function () { if (edge.parentNode) edge.parentNode.removeChild(edge); finish(); } });
       tl.to(digits, { yPercent: -110, duration: fast ? 0.35 : 0.6, ease: "expo.in", stagger: 0.05 })
         .to(".boot-label, .boot-top", { autoAlpha: 0, y: -8, duration: 0.4, ease: "power3.in" }, 0)
         .to(bar, { scaleX: 0, transformOrigin: "100% 50%", duration: 0.5, ease: "power3.inOut" }, fast ? 0.05 : 0.2)
         .add(open, fast ? 0.3 : 0.55)
         .fromTo(overlay, { clipPath: "inset(0% 0% 0% 0%)" },
-          { clipPath: "inset(0% 0% 100% 0%)", duration: fast ? 0.7 : 1.05, ease: "power3.inOut" }, fast ? 0.3 : 0.55);
+          { clipPath: "inset(0% 0% 100% 0%)", duration: fast ? 0.7 : 1.05, ease: "power3.inOut" }, fast ? 0.3 : 0.55)
+        .fromTo(edge, { y: window.innerHeight - 1, autoAlpha: 1 },
+          { y: -1, duration: fast ? 0.7 : 1.05, ease: "power3.inOut" }, fast ? 0.3 : 0.55)
+        .to(edge, { autoAlpha: 0, duration: 0.2 }, ">-0.2");
     } else {
       // CSS fallback (see .boot.is-leaving / .is-lifting in style.css).
       setTimeout(function () { overlay.classList.add("is-lifting"); open(); }, fast ? 150 : 400);

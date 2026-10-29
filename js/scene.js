@@ -207,7 +207,9 @@ function init(THREE) {
   const FONT_STACK = '"Geist", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
 
   function buildOutput(out, view) {
-    const lines = view.aspect < 0.78 ? ['GU', 'NR'] : ['GUNR'];
+    // One line everywhere: on portrait it spans ~80% width and stays a short band
+    // above the contact list instead of a tall block behind it.
+    const lines = ['GUNR'];
     const fs = 220;
     const c = document.createElement('canvas');
     const cw = lines.length === 1 ? 1100 : 640;
@@ -242,7 +244,8 @@ function init(THREE) {
     // Fit the word into the viewport at z = 0.
     const visW = view.halfW * 2, visH = view.halfH * 2;
     const tw = ok ? maxX - minX : 1, th = ok ? maxY - minY : 1;
-    const s = Math.min((visW * (view.aspect < 0.78 ? 0.8 : 0.74)) / tw, (visH * 0.5) / th);
+    // Kept to the upper band (behind the headline) so it clears the contact rows and QR.
+    const s = Math.min((visW * (view.aspect < 0.78 ? 0.8 : 0.66)) / tw, (visH * (view.aspect < 0.78 ? 0.3 : 0.36)) / th);
     const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
     const count = pts.length / 2;
     for (let i = 0; i < N; i++) {
@@ -403,6 +406,9 @@ function init(THREE) {
         vAlpha *= smoothstep(0.6, 2.0, depth);
         // Displaced points thin out instead of stacking into a bright crescent.
         vAlpha *= (1.0 - 0.6 * smoothstep(0.0, 0.25, length(disp))) * uDim;
+        // Core/embedding: thin the centre so additive stacking can't blow out to white.
+        float cw = (uFrom < 1.5 ? 1.0 - m : 0.0) + (uTo < 1.5 ? m : 0.0);
+        vAlpha *= mix(1.0, 0.3 + 0.7 * smoothstep(0.0, 0.5 * uFit, length(p)), cw);
         vBlur = blur;
         vAccent = step(aRand.w, uAccentRatio);
       }
@@ -649,7 +655,7 @@ function init(THREE) {
     const tOffY = view.halfH * (
       (portrait ? 0.35 : 0) * weight(0, pos) -
       0.3 * weight(3, pos) +
-      (portrait ? 0.2 : 0.28) * weight(5, pos));
+      (portrait ? 0.42 : 0.3) * weight(5, pos));
     offsetY += (tOffY - offsetY) * ease(2.5);
     group.position.y = offsetY;
     pulse = snap ? 0 : Math.max(0, pulse - dt / 0.6);

@@ -60,7 +60,7 @@ The loader shows once per browser tab; open a new tab to see it again.
   button until `phone` is real). Placeholder text inside sections shows up dimmed so you can spot it.
 - Keep the quotes and commas intact. If the page goes blank after an edit, a missing `"` or `,` is the usual cause.
 - **`siteUrl`** (the top of the file) is the address that QR codes and Share use. See [Deploy](#deploy-to-github-pages).
-- Social/SEO tags in `index.html` (`canonical`, `og:url`, `og:image`, `twitter:image`) point to
+- Social/SEO tags in `index.html` (`canonical`, `og:url`, and `og:image`/`twitter:image` once re-enabled) point to
   `https://gunr.dev/`. If you deploy somewhere else, update them too.
 
 | Field | What it drives |
@@ -70,32 +70,22 @@ The loader shows once per browser tab; open a new tab to see it again.
 | `research` | Attention cards + heatmap |
 | `experience` | Training-log timeline (`event: "fine-tune"` marks the Moorhead Brothers → Holdings transition) |
 | `skills` | Weights graph (`level` is 0–1, `note` is the tap-to-read one-liner) |
-| `assets` | Paths to optional media (leave as-is unless you rename files) |
+| `assets` | Not used by the v2 design (kept for compatibility) |
 
 ---
 
-## Add generated media (optional)
+## Add a social preview image (optional)
 
-The site already looks finished without any media files. Each slot uses a CSS/canvas fallback and only
-swaps in your file once it loads, so you never get a broken image.
+The v2 design draws everything (particle field, grain, type) in code, so it uses **no media files**.
+The only image that matters is the link-preview card:
 
-1. Open **`ASSET_PROMPTS.md`**. It gives the model, prompt, negative prompt and size for each slot.
-2. Generate the file and save it into **`assets/`** using the **exact filename** below (the names are a contract):
-
-| Slot | File | Size |
+| File | Size | Used by |
 |---|---|---|
-| Avatar | `assets/avatar.webp` | 1024×1024 |
-| Hero poster | `assets/hero-poster.webp` | 1920×1080 |
-| Hero loop | `assets/hero-loop.mp4` (+ optional `.webm`) | 1280×720, 5–8 s, no audio, < 4 MB |
-| Mobile hero | `assets/hero-mobile.webp` | 1080×1920 |
-| Layer backdrops | `assets/layer-embedding.webp`, `layer-attention.webp`, `layer-hidden.webp`, `layer-weights.webp`, `layer-output.webp` | 1920×1080, dark, low contrast |
-| Boot emblem | `assets/boot-logo.webp` | 1024×1024 |
-| Social preview | `assets/og.png` | 1200×630 |
+| `assets/og.png` | 1200×630 PNG | Link previews on LinkedIn, iMessage, Slack, etc. |
 
-3. Refresh to check, then upload the new files to the repo's `assets/` folder.
-   `assets/README.md` has the same list.
-
-Videos are skipped for visitors with reduced motion or Data Saver turned on.
+After adding it, re-enable the preview tags in `index.html` (the comment above `twitter:card` lists them).
+`PROFILE.assets` and the other slots in `ASSET_PROMPTS.md` (avatar, hero loop, layer backdrops, boot emblem)
+are not read by the current design; files dropped in for them do nothing.
 
 ---
 
@@ -232,6 +222,6 @@ css/style.css         main styles     css/terminal.css  terminal overlay     css
 js/content.js         ALL personal content + siteUrl  <- edit this
 js/vcard.js  js/qr.js js/boot.js  js/scene.js (WebGL particles)  js/journey.js  js/terminal.js
 serve.ps1             local preview server (http://localhost:8787)
-assets/               optional generated media (see ASSET_PROMPTS.md)
+assets/               og.png social preview only (optional)
 favicon.svg  manifest.webmanifest
 ```

@@ -189,6 +189,15 @@ html.no-webgl .scene { display: none; }
 }
 .no-js .boot, .no-boot .boot { display: none; }
 .boot.is-lifting { clip-path: inset(0 0 100% 0); transition: clip-path 1s var(--ease-io); }
+.boot-edge {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 101;
+  height: 1px;
+  background: var(--signal);
+  pointer-events: none;
+  visibility: hidden;
+}
 .boot-top { display: flex; align-items: center; justify-content: space-between; }
 .boot-mark {
   display: inline-flex;
@@ -255,7 +264,16 @@ html.no-webgl .scene { display: none; }
   align-items: center;
   height: calc(var(--topbar) + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) var(--gutter) 0;
-  background: linear-gradient(to bottom, rgba(11, 11, 12, .96) 70%, rgba(11, 11, 12, 0));
+  isolation: isolate;
+}
+/* Scrim: solid behind the bar, fading out below it so content never reads through. */
+.topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -32px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--ink) 62%, rgba(11, 11, 12, 0));
 }
 .brand {
   display: inline-flex;
@@ -307,6 +325,10 @@ html.no-webgl .scene { display: none; }
   z-index: 45;
   display: none;
   transform: translateY(-50%);
+  /* Ink pill keeps the digits legible when full-width content passes beneath. */
+  padding: 8px 6px 8px 10px;
+  border-radius: 999px;
+  background: rgba(11, 11, 12, .72);
 }
 .idx-list { display: flex; flex-direction: column; gap: 4px; }
 .idx-a {
@@ -621,22 +643,38 @@ html.no-webgl .scene { display: none; }
 .att-cloud-h { display: flex; justify-content: space-between; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line-2); }
 .att-cloud-h .dim { text-transform: none; letter-spacing: .04em; }
 .att-cloud-list li {
+  background: var(--ink);
   color: var(--paper-dim);
-  transition: opacity .5s, background-color .5s, color .5s, border-color .5s;
+  transition: opacity .5s, background-color .5s, color .5s, border-color .5s, transform .6s var(--ease-out);
 }
-.att-active .att-cloud-list li { opacity: .3; }
+.att-active .att-cloud-list li { opacity: .22; }
 .att-active .att-cloud-list li.is-on {
-  opacity: calc(.6 + var(--w, 0) * 1.4);
-  background: var(--paper);
-  border-color: var(--paper);
+  opacity: 1;
+  background: var(--signal);
+  border-color: var(--signal);
   color: var(--ink);
+  transform: translateY(-2px);
+  transition-delay: calc(var(--i, 0) * 30ms);
 }
 .att-active .att-cloud-list li.is-on b { color: var(--ink); }
+/* Rows step back so the attended one (query) reads at a glance. */
+.att-active .att-row:not(.is-focus) .att-title { opacity: .35; }
+.att-title { transition: transform .8s var(--ease-out), opacity .5s; }
+/* Light scrim so dense copy sits on clean ink over the particle field. */
+.att-cloud, .epoch { background: radial-gradient(closest-side, rgba(11, 11, 12, .55), transparent); }
 .att-hint { margin-top: 18px; text-transform: none; letter-spacing: .04em; }
 
 /* ---- 03 · Hidden (experience) --------------------------------------------- */
 .layer--hidden { overflow: clip; }
-.hz-track { position: relative; }
+/* Stacked (mobile / reduced / no-GSAP) layout lives outside .wrap, so it needs
+   the same gutter; the .hz-on rules below set their own padding. */
+.hz-track {
+  position: relative;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+}
+.hz-track .sec-title { overflow-wrap: anywhere; }
 .hz-intro { position: relative; }
 .hz-lede {
   max-width: 24ch;
@@ -694,6 +732,8 @@ html.no-webgl .scene { display: none; }
   width: max-content;
   height: 100vh;
   padding: 0 calc(var(--gutter) + 40px) 0 var(--gutter);
+  max-width: none;
+  margin: 0;
   will-change: transform;
 }
 .hz-on .hz-epochs { display: contents; }
@@ -788,6 +828,9 @@ html.no-webgl .scene { display: none; }
 .w-row.is-open .w-note { grid-template-rows: 1fr; }
 .w-note p { min-height: 0; overflow: hidden; font-size: 14px; color: var(--paper-dim); }
 .w-row.is-open .w-note p { padding-bottom: 14px; }
+/* Collapsed panels leave the tab order and a11y tree once the collapse finishes. */
+.att-body-in, .w-note p { visibility: hidden; transition: visibility 0s .8s; }
+.att-row.is-open .att-body-in, .w-row.is-open .w-note p { visibility: visible; transition-delay: 0s; }
 
 /* ---- 05 · Output ---------------------------------------------------------- */
 .layer--output { padding-bottom: clamp(64px, 10vh, 120px); }
@@ -992,10 +1035,12 @@ html.no-webgl .scene { display: none; }
   transition: transform .6s var(--ease-out), background-color .4s, border-color .4s;
 }
 .cursor.is-hover .cursor-ring::before { transform: scale(1.7); border-color: rgba(237, 234, 228, .8); }
-.cursor.has-label .cursor-ring::before { transform: scale(2.3); background: var(--signal); border-color: var(--signal); }
-.cursor.has-label .cursor-dot { opacity: 0; }
+/* Labeled disc sits off the pointer so it never covers what is being hovered. The offset
+   lives on the ring's children because GSAP owns the ring's own transform/translate. */
+.cursor.has-label .cursor-ring::before { transform: translate(48px, 42px) scale(2.3); background: var(--signal); border-color: var(--signal); }
 .cursor.is-down .cursor-ring::before { transform: scale(.8); }
 .cursor.is-text .cursor-ring::before { transform: scale(.3); }
+.cursor.has-label.is-down .cursor-ring::before { transform: translate(48px, 42px) scale(2); }
 .cursor-label {
   position: absolute;
   top: 0; left: 0;
@@ -1006,9 +1051,9 @@ html.no-webgl .scene { display: none; }
   white-space: nowrap;
   color: var(--ink);
   opacity: 0;
-  transition: opacity .3s;
+  transition: opacity .3s, transform .6s var(--ease-out);
 }
-.cursor.has-label .cursor-label { opacity: 1; transition-delay: .1s; }
+.cursor.has-label .cursor-label { opacity: 1; transform: translate(calc(-50% + 48px), calc(-50% + 42px)); transition-delay: .1s, 0s; }
 
 /* ---- No-JS ---------------------------------------------------------------- */
 .noscript-card { max-width: 40rem; margin: 0 auto; padding: 120px var(--gutter); display: grid; gap: 18px; }
@@ -1058,6 +1103,28 @@ html.no-webgl .scene { display: none; }
   .foot-term { display: none; }
 }
 
+/* Phones have no backtick key and the fixed toggle sat over tap targets;
+   the terminal stays reachable via the footer hint on larger screens. */
+.foot-term-btn {
+  display: none;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+@media (max-width: 767.98px) {
+  .term-toggle { display: none; }
+  .foot-term { display: none; }
+  .foot-term-btn { display: inline-flex; }
+  .no-js .foot-term-btn { display: none; }
+}
+
 @media (min-width: 600px) {
   .hero-actions .btn { flex: 0 0 auto; }
   .w-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1070,7 +1137,7 @@ html.no-webgl .scene { display: none; }
   .dock-on .term-toggle { bottom: calc(16px + env(safe-area-inset-bottom)); }
   .dock-on .toast { bottom: 24px; }
   .term-toggle { right: 20px; bottom: 20px; }
-  .wrap { padding-right: calc(var(--gutter) + 48px); }
+  .wrap, html:not(.hz-on) .hz-track { padding-right: calc(var(--gutter) + 48px); }
   .hero-foot { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: end; }
   .hero-actions { justify-content: flex-end; }
   .pull { margin-left: 16.66%; }
@@ -1095,9 +1162,9 @@ html.no-webgl .scene { display: none; }
 }
 
 /* The fixed index steps back while cards slide beneath it. */
-.hz-on[data-section="hidden"] .index { opacity: .3; }
+.hz-on[data-section="hidden"] .index { opacity: .6; }
 .index { transition: opacity .6s; }
-.index:hover { opacity: 1; }
+.index:hover, .index:focus-within { opacity: 1; }
 @media (max-width: 399.98px) {
   .btn { padding: 0 16px; }
 }
