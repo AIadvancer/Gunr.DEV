@@ -1,0 +1,463 @@
+/* =============================================================================
+ * GUNR.DEV — terminal.css
+ * GUNR//OS terminal overlay (markup is built by js/terminal.js).
+ * Mobile-first: fullscreen sheet; >= 768px: large centered window.
+ * Colors read the site tokens from style.css, with fallbacks so the
+ * terminal still looks right on its own.
+ * ========================================================================== */
+
+.term {
+  --term-accent: var(--accent, #39ff9c);
+  --term-cyan: var(--accent-2, #00d4ff);
+  --term-amber: var(--accent-3, #ffb547);
+  --term-danger: var(--danger, #ff4d6d);
+  --term-bg: var(--bg, #05070a);
+  --term-bg-2: var(--bg-2, #0b1017);
+  --term-fg: var(--fg, #d8e1ea);
+  --term-dim: var(--fg-dim, #8a98a8);
+  --term-line: rgba(57, 255, 156, 0.18);
+  --term-glow-text: 0 0 6px rgba(57, 255, 156, 0.45);
+  --term-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --term-vvh: 100vh;
+  --term-vvtop: 0px;
+
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  right: 0;
+  top: var(--term-vvtop);
+  height: var(--term-vvh);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  font-family: var(--term-mono);
+  color: var(--term-fg);
+}
+
+@supports (height: 100dvh) {
+  .term { --term-vvh: 100dvh; }
+}
+
+/* Theme swaps need no rules here: html[data-theme] redefines --accent in
+   style.css, and --term-accent follows it. */
+
+@supports (color: color-mix(in srgb, red 50%, transparent)) {
+  .term {
+    --term-line: color-mix(in srgb, var(--term-accent) 22%, transparent);
+    --term-glow-text: 0 0 6px color-mix(in srgb, var(--term-accent) 45%, transparent);
+  }
+}
+
+.term[hidden] { display: none !important; }
+
+/* Lock page scroll while open. */
+html.term-open,
+html.term-open body { overflow: hidden; }
+
+.term__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 4, 6, 0.78);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+/* ---------------------------------------------------------------- window */
+
+.term__window {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 40%, rgba(57, 255, 156, 0.05), transparent 70%),
+    var(--term-bg);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* CRT: faint scanlines + vignette, above content but click-through. */
+.term__window::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 62%, rgba(0, 0, 0, 0.42) 100%);
+}
+
+@media (min-width: 768px) {
+  .term { align-items: center; padding: 24px; }
+  .term__window {
+    width: min(980px, 100%);
+    height: min(680px, 100%);
+    border: 1px solid var(--term-line);
+    border-radius: 6px;
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.6),
+      0 24px 80px rgba(0, 0, 0, 0.6),
+      0 0 40px rgba(57, 255, 156, 0.08);
+    padding-bottom: 0;
+  }
+}
+
+/* --------------------------------------------------------------- title bar */
+
+.term__bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 4px 0 16px;
+  padding-top: env(safe-area-inset-top, 0px);
+  border-bottom: 1px solid var(--term-line);
+  background: var(--term-bg-2);
+  flex: none;
+}
+
+.term__dots { display: inline-flex; gap: 6px; }
+.term__dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--term-danger);
+}
+.term__dots i:nth-child(2) { background: var(--term-amber); }
+.term__dots i:nth-child(3) { background: var(--term-accent); }
+
+.term__title {
+  flex: 1;
+  margin: 0;
+  font: 500 13px/1 var(--term-mono);
+  letter-spacing: 0.08em;
+  color: var(--term-dim);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.term__close {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--term-dim);
+  cursor: pointer;
+}
+.term__close:hover { color: var(--term-fg); background: rgba(255, 255, 255, 0.06); }
+
+/* ------------------------------------------------------------------ screen */
+
+.term__screen {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 16px 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  scrollbar-width: thin;
+  scrollbar-color: var(--term-line) transparent;
+}
+
+@media (min-width: 768px) {
+  .term__screen { padding: 18px 22px 14px; font-size: 15px; }
+}
+
+.term__out { min-width: 0; }
+
+.term-l {
+  min-height: 1.55em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.term-echo { color: var(--term-fg); margin-top: 6px; }
+.term-p,
+.term__prompt {
+  color: var(--term-accent);
+  text-shadow: var(--term-glow-text);
+}
+
+.term-hl { color: var(--term-fg); font-weight: 700; }
+.term-acc { color: var(--term-accent); text-shadow: var(--term-glow-text); }
+.term-amber { color: var(--term-amber); }
+.term-dim { color: var(--term-dim); }
+.term-err { color: var(--term-danger); }
+.term-k { color: var(--term-dim); }
+
+/* Unfilled [[placeholder]] from content.js: visible but clearly unfinished. */
+.term-ph {
+  color: var(--term-dim);
+  font-style: italic;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.term-a {
+  color: var(--term-cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.term-a:hover { text-decoration-thickness: 2px; }
+
+/* Inline runnable command (help list, hints). */
+.term-cmd {
+  display: inline;
+  margin: 0;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--term-accent);
+  text-shadow: var(--term-glow-text);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  white-space: pre;
+  cursor: pointer;
+}
+.term-cmd:hover { text-decoration-style: solid; }
+.term-cmd--dir { color: var(--term-cyan); }
+
+/* Touch: ~44px tall targets for inline commands and links. */
+@media (pointer: coarse) {
+  .term-cmd,
+  .term-a { display: inline-block; padding: 11px 0; }
+}
+
+/* Wide fixed-width blocks scroll inside themselves, never the page. */
+.term-pre {
+  margin: 4px 0;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--term-fg);
+}
+.term-pre--wide { color: var(--term-accent); text-shadow: var(--term-glow-text); }
+@media (min-width: 768px) {
+  .term-pre { font-size: 13px; }
+}
+
+.term-qr {
+  display: inline-block;
+  width: min(220px, 62vw);
+  margin: 8px 0 4px;
+  padding: 8px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 24px rgba(57, 255, 156, 0.18);
+}
+.term-qr svg { display: block; width: 100%; height: auto; }
+
+/* ---------------------------------------------------------------- prompt */
+
+.term__line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+  margin: 8px 0 0;
+  font-size: 16px; /* >= 16px keeps iOS from zooming on focus */
+  line-height: 1.5;
+}
+
+.term__prompt { flex: none; white-space: nowrap; }
+
+.term__field {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The visible text + block cursor; the real input sits on top, invisible. */
+.term__mirror {
+  min-height: 1.5em;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--term-fg);
+}
+
+.term__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.term__input::selection { background: rgba(0, 212, 255, 0.35); }
+
+.term__cursor {
+  display: inline-block;
+  min-width: 1ch;
+  background: var(--term-accent);
+  color: var(--term-bg);
+  box-shadow: 0 0 8px rgba(57, 255, 156, 0.5);
+  animation: term-blink 1.05s steps(1, end) infinite;
+}
+
+/* Unfocused: hollow, steady block. */
+.term__field:not(:focus-within) .term__cursor {
+  background: transparent;
+  color: inherit;
+  box-shadow: inset 0 0 0 1px var(--term-accent);
+  animation: none;
+}
+
+/* Keyboard focus ring on the prompt row. The plain :focus-within rule is the
+   fallback; where :has() works, the ring is limited to keyboard focus. */
+.term__field:focus-within {
+  outline: 2px solid var(--term-accent);
+  outline-offset: 4px;
+}
+@supports selector(:has(*)) {
+  .term__field:focus-within:not(:has(.term__input:focus-visible)) { outline: none; }
+}
+
+@keyframes term-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ------------------------------------------------------------ quick chips */
+
+.term__chips {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  gap: 8px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  border-top: 1px solid var(--term-line);
+  background: var(--term-bg-2);
+  scrollbar-width: none;
+}
+.term__chips::-webkit-scrollbar { display: none; }
+
+.term-chip {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--term-line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--term-fg);
+  font: 500 14px/1 var(--term-mono);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background-color 0.12s;
+}
+.term-chip:hover {
+  border-color: var(--term-accent);
+  color: var(--term-accent);
+  background: rgba(57, 255, 156, 0.06);
+}
+.term-chip:active { transform: translateY(1px); }
+
+@media (min-width: 768px) {
+  .term__chips { padding: 10px 16px; }
+  .term-chip { min-height: 36px; font-size: 13px; }
+}
+@media (min-width: 768px) and (pointer: coarse) {
+  .term-chip { min-height: 44px; }
+}
+
+/* ------------------------------------------------------------------ focus */
+
+.term__close:focus-visible,
+.term-chip:focus-visible,
+.term-cmd:focus-visible,
+.term-a:focus-visible {
+  outline: 2px solid var(--term-accent);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------- effects */
+
+/* Matrix rain canvas, positioned over .term__screen by terminal.js. */
+.term__rain {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+.term__rain.is-fading { opacity: 0; }
+
+/* CRT power-on: a bright line that opens into the screen. */
+.term.is-entering .term__backdrop { animation: term-fade 0.24s ease-out both; }
+.term.is-entering .term__window { animation: term-power-on 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@keyframes term-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes term-power-on {
+  0% { transform: scale(0.6, 0.004); filter: brightness(3); opacity: 0.4; }
+  45% { transform: scale(1, 0.004); filter: brightness(2.4); opacity: 1; }
+  100% { transform: scale(1, 1); filter: brightness(1); opacity: 1; }
+}
+
+/* rm -rf / : brief RGB-split shake. */
+.term__window.is-glitching { animation: term-glitch 0.42s steps(2, end) 1; }
+
+@keyframes term-glitch {
+  0% { transform: translate(0, 0); filter: none; }
+  20% { transform: translate(-3px, 1px); filter: drop-shadow(2px 0 0 rgba(255, 77, 109, 0.7)) drop-shadow(-2px 0 0 rgba(0, 212, 255, 0.7)); }
+  40% { transform: translate(3px, -1px); filter: drop-shadow(-2px 0 0 rgba(255, 77, 109, 0.7)) drop-shadow(2px 0 0 rgba(0, 212, 255, 0.7)); }
+  60% { transform: translate(-2px, 0); filter: none; }
+  80% { transform: translate(1px, 1px); filter: drop-shadow(1px 0 0 rgba(255, 77, 109, 0.6)); }
+  100% { transform: translate(0, 0); filter: none; }
+}
+
+/* ------------------------------------------------------------- utilities */
+
+.term__sr {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .term.is-entering .term__backdrop,
+  .term.is-entering .term__window,
+  .term__window.is-glitching,
+  .term__cursor { animation: none !important; }
+  .term-chip,
+  .term__rain { transition: none; }
+}

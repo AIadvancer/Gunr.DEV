@@ -1,0 +1,383 @@
+/* =============================================================================
+ * GUNR.DEV — print.css
+ * Styles for card.html, the printable networking kit.
+ *
+ *   1. Tokens + base (screen UI)
+ *   2. Screen UI: top bar, controls, buttons, alerts, tips, toast
+ *   3. Preview: sheets scaled to fit (JS sets the scale; geometry stays in inches)
+ *   4. Print geometry: sheets, grids, crop marks (all physical units)
+ *   5. Items: card front, card back, sticker, poster — ink-friendly + dark
+ *   6. @page + @media print
+ *
+ * Physical layout contract (US Letter, 8.5in x 11in, @page margin 0):
+ *   cards    3.5in x 2in, 2 x 5, no gutter, grid at left .75in / top .5in
+ *   stickers 2in x 2in,   3 x 4, .25in gutter, grid at left 1in / top 1.125in
+ *   poster   one panel inset .5in from every edge
+ * ========================================================================== */
+
+/* ---------- 1. Tokens + base ---------- */
+:root {
+  --bg: #05070a;
+  --bg-2: #0b1017;
+  --panel: rgba(16, 22, 30, .72);
+  --panel-solid: #10161e;
+  --fg: #d8e1ea;
+  --fg-dim: #8a98a8;
+  --accent: #39ff9c;
+  --accent-2: #00d4ff;
+  --accent-3: #ffb547;
+  --danger: #ff4d6d;
+  --line: rgba(57, 255, 156, .18);
+  --radius: 4px;
+  --glow: 0 0 12px rgba(57, 255, 156, .45);
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --display: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  color-scheme: dark;
+}
+@supports (color: color-mix(in srgb, red 50%, transparent)) {
+  :root { --glow: 0 0 12px color-mix(in srgb, var(--accent) 55%, transparent); }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 15px/1.55 var(--mono);
+  overflow-x: hidden;
+}
+h1, h2, h3, p, figure, ul, ol { margin: 0; }
+a { color: var(--accent); text-underline-offset: 3px; }
+code { font-family: var(--mono); color: var(--accent-3); word-break: break-all; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.sr-only {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip {
+  position: absolute; left: 16px; top: -60px; z-index: 50;
+  padding: 10px 14px; background: var(--accent); color: #000; border-radius: var(--radius);
+}
+.skip:focus { top: 12px; }
+[hidden] { display: none !important; }
+.dim { color: var(--fg-dim); }
+.accent { color: var(--accent); }
+
+/* ---------- 2. Screen UI ---------- */
+.topbar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(var(--bg-2), var(--bg));
+}
+.topbar__back {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px;
+  color: var(--fg); text-decoration: none; font-size: 13px;
+}
+.topbar__back:hover { color: var(--accent); }
+.topbar__title { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+
+.app {
+  max-width: 1480px; margin: 0 auto; padding: 16px;
+  display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 960px) {
+  .app { grid-template-columns: minmax(300px, 370px) minmax(0, 1fr); gap: 24px; padding: 24px; }
+  .controls {
+    position: sticky; top: 16px; align-self: start;
+    max-height: calc(100vh - 32px); overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+}
+.main { min-width: 0; display: grid; gap: 16px; align-content: start; }
+
+/* Terminal-window panel */
+.panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.panel__bar {
+  display: flex; align-items: center; gap: 12px; padding: 7px 12px;
+  border-bottom: 1px solid var(--line); font-size: 12px; color: var(--fg-dim);
+}
+.panel__bar .dots { color: var(--accent); letter-spacing: .2em; font-size: 10px; }
+.panel__body { padding: 16px; display: grid; gap: 16px; }
+@media (min-width: 480px) { .panel__body { padding: 20px; } }
+
+.h1 { font: 700 clamp(26px, 6vw, 34px)/1.05 var(--display); letter-spacing: -.03em; color: #fff; }
+.h2 { font: 600 20px/1.2 var(--display); letter-spacing: -.02em; color: #fff; }
+.kicker { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+.lede { color: var(--fg-dim); font-size: 14px; }
+
+/* Live QR */
+.live-qr { display: grid; gap: 10px; justify-items: center; }
+.live-qr__code {
+  width: min(240px, 100%); aspect-ratio: 1; background: #fff; border-radius: var(--radius);
+  box-shadow: var(--glow); overflow: hidden;
+}
+.live-qr__code svg { display: block; width: 100%; height: 100%; }
+.live-qr__code.is-missing {
+  display: grid; place-items: center; padding: 16px; background: var(--bg-2); box-shadow: none;
+  border: 1px dashed var(--danger); text-align: center; color: #fff;
+  font: 700 clamp(20px, 6vw, 28px)/1.2 var(--mono); word-break: break-all;
+}
+.live-qr figcaption { font-size: 12px; color: var(--fg-dim); text-align: center; word-break: break-all; }
+
+/* Form */
+.form { display: grid; gap: 16px; }
+fieldset { margin: 0; padding: 0; border: 0; min-width: 0; display: grid; gap: 6px; }
+legend { padding: 0; margin-bottom: 6px; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--fg-dim); }
+.choice {
+  position: relative; display: flex; align-items: center; gap: 10px; min-height: 44px;
+  padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius);
+  cursor: pointer; font-size: 13px; line-height: 1.3;
+  transition: border-color .15s, background-color .15s;
+}
+.choice:hover { border-color: rgba(57, 255, 156, .45); }
+.choice input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--accent); }
+.choice:has(input:checked) { border-color: var(--accent); background: rgba(57, 255, 156, .07); }
+.choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.choice small { display: block; color: var(--fg-dim); font-size: 11px; }
+.nudge { grid-template-columns: 1fr 1fr; column-gap: 10px; }
+.nudge legend { grid-column: 1 / -1; }
+.nudge p { grid-column: 1 / -1; font-size: 11px; color: var(--fg-dim); }
+.num { display: grid; gap: 4px; font-size: 12px; color: var(--fg-dim); }
+.num input {
+  min-height: 44px; width: 100%; padding: 6px 10px; background: var(--bg); color: var(--fg);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  font: inherit; font-size: 16px; /* >= 16px stops iOS Safari zooming on focus */
+}
+
+/* Buttons */
+.btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 10px 14px; border-radius: var(--radius);
+  border: 1px solid var(--line); background: var(--bg-2); color: var(--fg);
+  font-size: 13px; line-height: 1.2; text-align: center; cursor: pointer; text-decoration: none;
+  transition: border-color .15s, color .15s, box-shadow .15s;
+}
+.btn:hover { border-color: var(--accent); color: #fff; }
+.btn:hover:not(:disabled) { animation: glitch 120ms steps(2, end) 1; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn--primary { background: var(--accent); color: #00140a; border-color: var(--accent); font-weight: 700; }
+.btn--primary:hover { color: #00140a; box-shadow: var(--glow); }
+.btn--block { width: 100%; }
+.btn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+@keyframes glitch {
+  0%   { text-shadow: -2px 0 var(--danger), 2px 0 var(--accent-2); transform: translateX(1px); }
+  50%  { text-shadow: 2px 0 var(--danger), -2px 0 var(--accent-2); transform: translateX(-1px); }
+  100% { text-shadow: none; transform: none; }
+}
+
+/* Alerts */
+.alerts { display: grid; gap: 10px; }
+.alerts:empty { display: none; }
+.alert {
+  padding: 12px 14px; border-radius: var(--radius); font-size: 13px;
+  border: 1px solid var(--accent-3); background: rgba(255, 181, 71, .08); color: var(--fg);
+}
+.alert strong { display: block; color: var(--accent-3); margin-bottom: 4px; }
+.alert--error { border-color: var(--danger); background: rgba(255, 77, 109, .09); }
+.alert--error strong { color: var(--danger); }
+.alert__url {
+  margin-top: 10px; color: #fff; font: 700 clamp(22px, 7vw, 32px)/1.15 var(--mono); word-break: break-all;
+}
+
+/* Tips */
+.tips h2 { margin-bottom: 4px; }
+.tips h3 { font: 600 15px/1.3 var(--display); color: #fff; margin-top: 4px; }
+.tips ul { padding-left: 1.2em; display: grid; gap: 8px; font-size: 13px; color: var(--fg); }
+.tips li::marker { color: var(--accent); }
+.tips__grid { display: grid; gap: 20px; }
+@media (min-width: 760px) { .tips__grid { grid-template-columns: 1fr 1fr; } }
+
+/* Toast */
+.toast {
+  position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 60;
+  max-width: calc(100vw - 32px); padding: 10px 14px; border-radius: var(--radius);
+  background: var(--panel-solid); color: var(--accent); border: 1px solid var(--accent);
+  font-size: 13px; box-shadow: var(--glow);
+  transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
+  transition: opacity .2s var(--ease), transform .2s var(--ease);
+}
+.toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- 3. Preview ---------- */
+.preview {
+  display: grid; gap: 24px; padding: 16px 0;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 1px 1px, rgba(57, 255, 156, .12) 1px, transparent 0) 0 0 / 18px 18px,
+    var(--bg-2);
+  border: 1px solid var(--line);
+}
+.page { display: grid; gap: 8px; justify-items: center; min-width: 0; padding: 0 12px; }
+.page__cap { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--fg-dim); text-align: center; }
+/* JS sets width/height to the scaled size and scales the sheet inside it. */
+.sheet-frame { position: relative; width: 8.5in; height: 11in; max-width: 100%; overflow: hidden; }
+.sheet-frame > .sheet {
+  position: absolute; top: 0; left: 0; transform-origin: 0 0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .06);
+}
+
+/* ---------- 4. Print geometry (physical units only) ---------- */
+.sheet {
+  position: relative; width: 8.5in; height: 11in; overflow: hidden;
+  background: #fff; color: #000;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.sheet * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.sheet p, .sheet ul { margin: 0; padding: 0; }
+
+.k-grid { position: absolute; display: grid; }
+.k-grid--cards {
+  left: .75in; top: .5in;
+  grid-template-columns: repeat(2, 3.5in); grid-template-rows: repeat(5, 2in);
+}
+.k-grid--stickers {
+  left: 1in; top: 1.125in; gap: .25in;
+  grid-template-columns: repeat(3, 2in); grid-template-rows: repeat(4, 2in);
+}
+/* Duplex fine-tune: moves the whole back grid (set in mm from the controls). */
+.k-grid--back { transform: translate(var(--nudge-x, 0mm), var(--nudge-y, 0mm)); }
+
+.k-marks { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: .55; }
+.no-marks .k-marks { display: none; }
+
+/* QR slot: always dark modules on a light field, quiet zone is inside the SVG. */
+.k-qr { width: 100%; aspect-ratio: 1 / 1; background: #fff; overflow: hidden; }
+.k-qr svg { display: block; width: 100%; height: 100%; }
+.k-qr--missing {
+  display: flex; align-items: center; justify-content: center; padding: 6%;
+  border: 1px dashed #000; color: #000; text-align: center; word-break: break-all;
+  font: 700 7pt/1.2 var(--mono);
+}
+
+/* ---------- 5. Items ---------- */
+.k-card {
+  position: relative; width: 3.5in; height: 2in; overflow: hidden;
+  background: #fff; color: #000; font-family: var(--mono);
+}
+.k-kicker { font: 600 5.5pt/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; }
+/* Wraps (rather than overflowing) when siteUrl is long, e.g. a github.io path. */
+.k-host { font: 600 6.5pt/1.15 var(--mono); letter-spacing: .03em; max-width: 100%; overflow-wrap: anywhere; }
+.k-qrcol .k-host { text-align: center; }
+.k-caret { color: inherit; font-weight: 700; }
+
+/* Card front: identity left, QR right */
+.k-front {
+  display: grid; grid-template-columns: minmax(0, 1fr) 1.22in; column-gap: .14in; align-items: center;
+  padding: .17in .17in .17in .22in;
+}
+.k-front::before { /* accent rule, kept inside the trim */
+  content: ""; position: absolute; left: .1in; top: .2in; bottom: .2in; width: .018in; background: #000;
+}
+.k-id { display: flex; flex-direction: column; justify-content: space-between; height: 100%; min-width: 0; }
+.k-name {
+  margin: .07in 0 .045in !important;
+  font: 700 14pt/1.02 var(--display); letter-spacing: -.02em; overflow-wrap: anywhere;
+}
+.k-role { font: 600 7pt/1.3 var(--mono); }
+.k-org { font: 400 7pt/1.3 var(--mono); }
+.k-note { font: 400 5.8pt/1.35 var(--mono); color: #555; }
+.k-contact { list-style: none; font: 400 6.3pt/1.45 var(--mono); overflow-wrap: anywhere; margin-bottom: .04in !important; }
+.k-prompt { font: 400 5.8pt/1 var(--mono); color: #555; }
+.k-qrcol { display: flex; flex-direction: column; align-items: center; gap: .05in; min-width: 0; }
+
+/* Card back: big QR + call to action */
+.k-back {
+  display: grid; grid-template-columns: 1.5in minmax(0, 1fr); column-gap: .16in; align-items: center;
+  padding: .2in .2in .2in .22in;
+}
+.k-back .k-qr { width: 1.5in; }
+.k-back__txt { display: flex; flex-direction: column; gap: .07in; min-width: 0; }
+.k-cta { font: 600 10.5pt/1.15 var(--display); letter-spacing: -.01em; }
+.k-handle { font: 700 17pt/1 var(--display); letter-spacing: .02em; overflow-wrap: anywhere; }
+
+/* Sticker: 2in square */
+.k-sticker {
+  width: 2in; height: 2in; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .07in;
+  padding: .12in; background: #fff; color: #000;
+}
+.k-sticker .k-qr { width: 1.5in; flex: none; }
+.k-sticker__label {
+  font: 600 6.8pt/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+  white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
+.k-sticker .k-qr--missing { font-size: 9pt; }
+
+/* Poster: one panel inset .5in */
+.k-poster {
+  position: absolute; inset: .5in; padding: .4in;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .16in;
+  text-align: center; color: #000; border: .02in solid #000;
+}
+.k-poster .k-kicker { font-size: 10pt; }
+.k-poster__name { font: 700 40pt/1.02 var(--display); letter-spacing: -.03em; }
+.k-poster__role { font: 500 13pt/1.3 var(--mono); }
+.k-poster .k-qr { width: 6in; flex: none; }
+.k-poster .k-qr--missing { font-size: 30pt; border-width: .03in; }
+.k-poster__cta { font: 600 20pt/1.15 var(--display); }
+.k-poster__host { font: 700 24pt/1 var(--mono); word-break: break-all; }
+
+/* Screen-only trim guides so white items are visible in the preview. */
+@media screen {
+  .sheet:not(.is-dark) .k-card,
+  .sheet:not(.is-dark) .k-sticker { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .1); }
+}
+
+/* Dark ("terminal") variant — prints as-is thanks to print-color-adjust: exact. */
+.is-dark .k-card,
+.is-dark .k-sticker,
+.is-dark .k-poster {
+  background-color: #05070a;
+  background-image:
+    linear-gradient(rgba(57, 255, 156, .07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57, 255, 156, .07) 1px, transparent 1px);
+  background-size: .125in .125in;
+  color: #d8e1ea;
+}
+.is-dark .k-poster { border-color: #39ff9c; border-radius: .12in; background-size: .25in .25in; }
+.is-dark .k-front::before { background: #39ff9c; }
+.is-dark .k-kicker,
+.is-dark .k-host,
+.is-dark .k-caret,
+.is-dark .k-role,
+.is-dark .k-sticker__label { color: #39ff9c; }
+.is-dark .k-name,
+.is-dark .k-cta,
+.is-dark .k-handle,
+.is-dark .k-poster__name,
+.is-dark .k-poster__cta { color: #fff; }
+.is-dark .k-poster__host { color: #39ff9c; }
+.is-dark .k-note,
+.is-dark .k-prompt { color: #8a98a8; }
+.is-dark .k-qr { border-radius: .04in; }
+.is-dark .k-qr--missing { background: #fff; color: #000; }
+
+/* Reduced motion: keep everything instant. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- 6. Print ---------- */
+/* Margin 0: each sheet carries its own exact margins, so the browser must not add any. */
+@page { size: letter; margin: 0; }
+
+@media print {
+  html, body { background: #fff !important; color: #000; margin: 0 !important; padding: 0 !important; min-height: 0; }
+  .no-print, .toast, .skip { display: none !important; }
+  .app, .main { display: block; padding: 0; margin: 0; max-width: none; gap: 0; }
+  .preview { display: block; padding: 0; margin: 0; border: 0; background: none; border-radius: 0; }
+  .page { display: block; padding: 0; margin: 0; break-after: page; page-break-after: always; break-inside: avoid; }
+  .page:last-child { break-after: auto; page-break-after: auto; }
+  /* A hair under 11in so rounding never spills a blank extra page (only white margin is clipped). */
+  .sheet-frame { width: 8.5in !important; height: 10.98in !important; max-width: none; margin: 0; overflow: hidden; }
+  .sheet-frame > .sheet { position: relative; transform: none !important; box-shadow: none; }
+}
