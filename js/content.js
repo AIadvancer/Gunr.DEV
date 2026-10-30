@@ -199,6 +199,8 @@ window.PROFILE = {
     heroLoop: "assets/hero-loop.mp4",
     heroLoopWebm: "assets/hero-loop.webm",
     heroMobile: "assets/hero-mobile.webp",
+    heroLoopMobile: "assets/hero-loop-mobile.mp4",
+    heroLoopMobileWebm: "assets/hero-loop-mobile.webm",
     bootLogo: "assets/boot-logo.webp",
     og: "assets/og.png",
     layers: {

@@ -31,17 +31,64 @@
   <link rel="manifest" href="manifest.webmanifest">
 
   <!-- Runs before first paint. Decides the motion mode once for every script:
-       ?motion=full | ?motion=reduced override the OS preference. Also restores
-       the theme and decides whether the loader shows (once per session). -->
+       ?motion=full|reduced wins, then the visitor's saved choice (localStorage
+       "gunr.motion"), then the OS preference. Also restores the theme, decides
+       whether the loader shows (once per session) and owns the Motion switch. -->
   <script>
     (function (w, d) {
       var h = d.documentElement;
       h.className = h.className.replace("no-js", "js");
+      var KEY = "gunr.motion";
       var q = /[?&]motion=(full|reduced)\b/.exec(w.location.search);
+      var stored = null;
+      try { stored = localStorage.getItem(KEY); } catch (e) {}
+      if (stored !== "full" && stored !== "reduced") stored = null;
       var prefersReduced = !!(w.matchMedia && w.matchMedia("(prefers-reduced-motion: reduce)").matches);
-      var full = q ? q[1] === "full" : !prefersReduced;
-      w.GUNR_MOTION = { full: full };
+      var full, source;
+      if (q) { full = q[1] === "full"; source = "url"; }
+      else if (stored) { full = stored === "full"; source = "stored"; }
+      else { full = !prefersReduced; source = "system"; }
+
+      // set("full" | "reduced"): save the choice, fade the page out and reload into it
+      // (loader skipped). Without storage the choice rides along as ?motion= instead.
+      function set(mode) {
+        var f = mode === "full" || mode === true, v = f ? "full" : "reduced", ok = false;
+        try { localStorage.setItem(KEY, v); ok = localStorage.getItem(KEY) === v; } catch (e) {}
+        try { sessionStorage.setItem("gunr.booted", "1"); } catch (e) {}
+        // Remembered for journey.js: same scroll position after the reload, focus back
+        // on the switch if it had it, and a toast announcing the new mode.
+        try {
+          var a = d.activeElement;
+          sessionStorage.setItem("gunr.motionReturn", JSON.stringify({
+            y: w.scrollY || w.pageYOffset || 0,
+            focus: !!(a && a.closest && a.closest("[data-motion-toggle]"))
+          }));
+        } catch (e) {}
+        h.classList.add("motion-switching");
+        setTimeout(function () {
+          var l = w.location;
+          var s = l.search.replace(/([?&])motion=(full|reduced)\b&?/, "$1").replace(/[?&]$/, "");
+          if (!ok) s += (s ? "&" : "?") + "motion=" + v;
+          if (s === l.search) l.reload();
+          else l.replace(l.pathname + s + l.hash);
+        }, 250);
+      }
+      // Keeps every [data-motion-toggle] switch's aria-checked in step with the mode.
+      function sync() {
+        var t = d.querySelectorAll("[data-motion-toggle]");
+        for (var i = 0; i < t.length; i++) t[i].setAttribute("aria-checked", String(full));
+      }
+      w.GUNR_MOTION = { full: full, source: source, set: set, sync: sync };
       h.classList.add(full ? "motion-full" : "motion-reduced");
+      d.addEventListener("DOMContentLoaded", sync);
+      d.addEventListener("click", function (e) {
+        var t = e.target && e.target.closest && e.target.closest("[data-motion-toggle]");
+        if (!t) return;
+        e.preventDefault();
+        set(full ? "reduced" : "full");
+      });
+      // Back/forward cache can restore the faded-out page; bring it back.
+      w.addEventListener("pageshow", function (e) { if (e.persisted) h.classList.remove("motion-switching"); });
 
       var LEGACY = { green: "lime", amber: "signal", cyan: "cyan", lime: "lime", signal: "signal" };
       try {
@@ -100,16 +147,26 @@
     });
   </script>
 
-  <!-- Background layers: static backdrop (WebGL fallback), the particle scene, film grain. -->
+  <!-- Background layers: static backdrop (WebGL fallback), the particle scene, the hero
+       media (optional loop/poster, filled by journey.js), film grain. The hero media lives
+       here rather than inside the hero so its mix-blend-mode: screen reaches the canvas
+       (.app is its own stacking context); it is absolutely positioned over the hero. -->
   <div class="backdrop" aria-hidden="true"></div>
   <canvas id="scene" class="scene" aria-hidden="true"></canvas>
+  <div class="hero-media" id="hero-media" aria-hidden="true"><div class="hero-media-in"></div></div>
   <div class="grain" aria-hidden="true"></div>
 
   <div id="app" class="app">
     <header class="topbar" id="topbar">
       <a class="brand" href="#layer-input" aria-label="GUNR, back to top"><i class="brand-dot" aria-hidden="true"></i><span>GUNR</span></a>
       <p class="topbar-layer" aria-hidden="true"><span class="topbar-idx" id="topbar-idx">00</span><span class="topbar-name" id="topbar-layer">Input</span></p>
-      <a class="topbar-cta u-link" href="#layer-output">Contact</a>
+      <div class="topbar-end">
+        <!-- Motion switch; the head script binds every [data-motion-toggle]. -->
+        <button type="button" class="motion-toggle" role="switch" aria-checked="false" data-motion-toggle title="Background animation">
+          <span class="mt-label">Motion</span><span class="mt-pill" aria-hidden="true"><i></i></span>
+        </button>
+        <a class="topbar-cta u-link" href="#layer-output">Contact</a>
+      </div>
       <span class="topbar-progress" aria-hidden="true"><i id="progress-fill"></i></span>
     </header>
 

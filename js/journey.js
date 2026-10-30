@@ -9,10 +9,12 @@
  *   window.GUNR_JOURNEY = { layers, goto(id), current(), setTheme(name),
  *                           selectSkill(name), saveContact(), copyEmail(),
  *                           share(), toast(msg), lenis }
- *   window.GUNR_TOAST(msg)
+ *   window.GUNR_TOAST(msg[, { ms, long }])
  *   window.GUNR_JOURNEY_READY = true once set up (the head failsafe reads it)
  *   Calls window.GUNR_SCENE (optional): setProgress, setSection(i, t),
- *   setAccent, staticFrame. Listens for gunr:scene-ready, gunr:boot-opening,
+ *   setAccent, staticFrame, setHeroDim. Reads window.GUNR_MOTION { full, source }
+ *   (the switch itself is bound by the head script). Fills #hero-media from
+ *   PROFILE.assets. Listens for gunr:scene-ready, gunr:boot-opening,
  *   gunr:boot-done, gunr:themechange, gunr:qr-ready / gunr:qr-failed.
  *
  * Degrades in layers: no GSAP -> IntersectionObserver + CSS transitions;
@@ -435,6 +437,9 @@
       '<a class="u-link" href="card.html">Print networking cards</a>' +
       '<span class="foot-term">Press <kbd>`</kbd> for terminal</span>' +
       '<button type="button" class="u-link foot-term-btn" data-term-open>Open terminal</button>' +
+      // Phones too narrow for the top-bar switch get it here (CSS decides which shows).
+      '<button type="button" class="motion-toggle foot-motion" role="switch" aria-checked="' + String(MOTION) + '" data-motion-toggle>' +
+        '<span class="mt-label">Motion</span><span class="mt-pill" aria-hidden="true"><i></i></span></button>' +
       '<a class="u-link" href="#layer-input">Back to top &uarr;</a></div>';
   }
 
@@ -459,16 +464,19 @@
    * ------------------------------------------------------------------------ */
   const toastEl = doc.getElementById("toast");
   let toastTimer = 0;
-  function toast(msg) {
+  /* toast(msg[, { ms, long }]): long messages get a rounded box and more time. */
+  function toast(msg, opts) {
     if (!toastEl) return;
+    const o = opts || {};
     msg = String(msg == null ? "" : msg).replace(/^>\s*/, "");
     toastEl.textContent = "";
     clearTimeout(toastTimer);
     // Re-set after a frame so screen readers announce repeated messages.
     requestAnimationFrame(() => {
       toastEl.textContent = msg;
+      toastEl.classList.toggle("is-long", !!o.long);
       toastEl.classList.add("is-on");
-      toastTimer = setTimeout(() => toastEl.classList.remove("is-on"), 2600);
+      toastTimer = setTimeout(() => toastEl.classList.remove("is-on"), o.ms || 2600);
     });
   }
   toast.show = toast;
@@ -1154,6 +1162,154 @@
   }
 
   /* ---------------------------------------------------------------------------
+   * Hero media: the optional generated loop + poster (PROFILE.assets), layered
+   * over the particle canvas with mix-blend-mode: screen. Every file is optional;
+   * the layer stays invisible until something actually loads, so a missing file
+   * leaves the hero exactly as it was (no broken icon, no layout shift).
+   *   desktop / landscape: heroLoopWebm + heroLoop, poster heroPoster
+   *   phones / portrait:   heroLoopMobileWebm + heroLoopMobile, poster heroMobile,
+   *                        each falling back to the desktop file when it 404s
+   * Video only in full motion, never on 2g/3g, and only after a poster loaded; no
+   * media at all on Save-Data. Video plays only while the hero is on screen.
+   * Loading waits for the loader and an idle moment.
+   * ------------------------------------------------------------------------ */
+  function setupHeroMedia() {
+    const box = doc.getElementById("hero-media");
+    const inner = box && $(".hero-media-in", box);
+    const A = P.assets || {};
+    if (!inner || !hero) return;
+
+    const portrait = mq("(max-width: 767px)").matches || window.innerWidth / Math.max(1, window.innerHeight) < 0.8;
+    box.classList.toggle("is-portrait", portrait);
+    const pick = (keys) => keys.map((k) => A[k]).filter(isSet).map(String);
+    const posters = pick(portrait ? ["heroMobile", "heroPoster"] : ["heroPoster"]);
+    const loops = (portrait ? [["heroLoopMobileWebm", "heroLoopMobile"]] : [])
+      .concat([["heroLoopWebm", "heroLoop"]]).map(pick).filter((s) => s.length);
+    const conn = navigator.connection || {};
+    const slow = !!conn.saveData || /(^|-)[23]g$/.test(String(conn.effectiveType || ""));
+    const allowVideo = MOTION && !slow && loops.length > 0;
+    // Save-Data: no media at all; the particle scene is the background.
+    if (conn.saveData || (!posters.length && !allowVideo)) return;
+
+    let shown = false, inView = true, video = null;
+
+    function dimScene() {
+      const S = scene();
+      if (shown && S && S.setHeroDim) fire(() => S.setHeroDim(0.6));
+    }
+    function reveal() {
+      if (shown) return;
+      shown = true;
+      box.classList.add("is-in");
+      dimScene();
+    }
+    doc.addEventListener("gunr:scene-ready", dimScene);
+
+    // Poster: decoded off-DOM and inserted only once it has loaded. The poster is
+    // frame 0 of its loop, so the video is only tried once a poster exists: the
+    // mobile poster -> mobile loop set first; the desktop fallback -> desktop set.
+    // With no files present that is 1 request on desktop, 2 on phones.
+    function loadPoster(i) {
+      if (i >= posters.length) return;
+      const img = new Image();
+      img.alt = "";
+      img.decoding = "async";
+      img.className = "hm-poster";
+      img.onload = () => {
+        inner.insertBefore(img, inner.firstChild);
+        reveal();
+        if (allowVideo && !video) loadVideo(portrait && posters[i] === String(A.heroMobile) ? 0 : loops.length - 1);
+      };
+      img.onerror = () => loadPoster(i + 1);
+      img.src = posters[i];
+    }
+
+    const play = () => {
+      if (!video || !inView || doc.hidden) return;
+      const p = video.play();
+      if (p && p.catch) p.catch(() => { /* autoplay refused: the poster stays */ });
+    };
+    const pause = () => { if (video) video.pause(); };
+
+    // Video: one <source> per format; when the last one errors, the set failed
+    // and the next set (desktop files) is tried, then the video is dropped.
+    function loadVideo(i) {
+      if (video) { video.remove(); video = null; }
+      if (i >= loops.length) return;
+      const v = doc.createElement("video");
+      video = v;
+      v.className = "hm-video";
+      v.muted = true;
+      v.defaultMuted = true;
+      v.playsInline = true;
+      ["muted", "playsinline", "loop", "autoplay", "disablepictureinpicture", "disableremoteplayback"].forEach((a) => v.setAttribute(a, ""));
+      v.setAttribute("preload", "none");
+      v.setAttribute("tabindex", "-1");
+      loops[i].forEach((src) => {
+        const s = doc.createElement("source");
+        s.src = src;
+        s.type = /\.webm(\?|#|$)/i.test(src) ? "video/webm" : "video/mp4";
+        v.appendChild(s);
+      });
+      const next = () => { if (v === video) loadVideo(i + 1); };
+      v.lastElementChild.addEventListener("error", next);
+      v.addEventListener("error", next);
+      v.addEventListener("canplay", () => {
+        if (v !== video) return;
+        v.classList.add("is-ready");
+        reveal();
+        if (inView) play(); else pause();
+      }, { once: true });
+      inner.appendChild(v);
+      if (!inView) pause();
+    }
+
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver((en) => {
+        inView = en[en.length - 1].isIntersecting;
+        if (inView) play(); else pause();
+      }).observe(hero);
+    }
+    doc.addEventListener("visibilitychange", () => { if (doc.hidden) pause(); else play(); });
+
+    // Full motion: the layer settles (1.06 -> 1) and fades out as the hero scrolls away.
+    if (mode === "full") {
+      gsap.fromTo(inner, { scale: 1.06, autoAlpha: 1 }, {
+        scale: 1, autoAlpha: 0, ease: "none",
+        scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: true }
+      });
+    }
+
+    function go() {
+      const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 200));
+      idle(() => loadPoster(0), { timeout: 2500 });
+    }
+    if (window.GUNR_BOOT && !window.GUNR_BOOT.done) doc.addEventListener("gunr:boot-done", go, { once: true });
+    else go();
+  }
+
+  /* Once per session, when motion is reduced only because of the OS setting, point
+     at the Motion switch: a longer toast plus two outline pulses on the switch. */
+  function motionHint() {
+    const M = window.GUNR_MOTION;
+    if (!M || M.full || M.source !== "system") return;
+    try {
+      if (sessionStorage.getItem("gunr.motionHint") === "1") return;
+      sessionStorage.setItem("gunr.motionHint", "1");
+    } catch (e) { /* storage blocked: show it anyway */ }
+    // Say where the switch is: below 360px it lives in the footer, not the top bar.
+    const where = mq("(max-width: 359.98px)").matches ? " (switch at the bottom of the page)" : " (top right)";
+    setTimeout(() => {
+      toast("Reduced motion is on in your system settings. Turn on Motion" + where + " for the full experience.", { ms: 7000, long: true });
+      $$("[data-motion-toggle]").forEach((t) => {
+        t.classList.remove("is-hint");
+        void t.offsetWidth; // restart the pulse
+        t.classList.add("is-hint");
+      });
+    }, 1600);
+  }
+
+  /* ---------------------------------------------------------------------------
    * Start
    * ------------------------------------------------------------------------ */
   window.GUNR_JOURNEY = {
@@ -1184,6 +1340,7 @@
     }
   }
   if (mode === "simple") setupSimple();
+  fire(setupHeroMedia);
   measure();
   window.GUNR_JOURNEY_READY = true;
 
@@ -1194,6 +1351,34 @@
     begun = true;
     if (mode === "full") heroInFull(); else heroInSimple();
     if (sectionSTs) ST.refresh();
+    fire(motionHint);
+    fire(motionReturn);
+  }
+
+  /* After the Motion switch reloads the page: return to the same scroll position,
+     put focus back on the switch if it had it, and announce the new mode. */
+  function motionReturn() {
+    let r = null;
+    try {
+      r = JSON.parse(sessionStorage.getItem("gunr.motionReturn") || "null");
+      sessionStorage.removeItem("gunr.motionReturn");
+    } catch (e) { return; }
+    if (!r) return;
+    const y = Math.max(0, +r.y || 0);
+    if (y && !(resolveLayer(location.hash) > 0)) { // a hash deep link already places the page
+      const jump = () => {
+        if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
+        else window.scrollTo(0, y);
+      };
+      jump();
+      // Again once load/fonts have settled the layout (and full mode's pin spacing).
+      if (doc.readyState !== "complete") window.addEventListener("load", () => setTimeout(jump, 80), { once: true });
+    }
+    if (r.focus) {
+      const t = $$("[data-motion-toggle]").find((el) => el.offsetParent !== null);
+      if (t) t.focus({ preventScroll: true });
+    }
+    toast("Motion " + (window.GUNR_MOTION && window.GUNR_MOTION.full ? "on" : "off"));
   }
   if (window.GUNR_BOOT && !window.GUNR_BOOT.done) {
     doc.addEventListener("gunr:boot-opening", begin, { once: true });
