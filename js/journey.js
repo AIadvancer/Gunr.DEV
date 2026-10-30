@@ -1108,16 +1108,14 @@
     doc.body.appendChild(c);
     root.classList.add("has-cursor");
     const ring = $(".cursor-ring", c), dot = $(".cursor-dot", c), label = $(".cursor-label", c);
-    const rx = gsap.quickTo(ring, "x", { duration: 0.5, ease: "power3.out" });
-    const ry = gsap.quickTo(ring, "y", { duration: 0.5, ease: "power3.out" });
-    const dx = gsap.quickTo(dot, "x", { duration: 0.08, ease: "power3.out" });
-    const dy = gsap.quickTo(dot, "y", { duration: 0.08, ease: "power3.out" });
+    // Ring and dot sit exactly on the pointer (no easing lag).
+    const moveTo = gsap.quickSetter([ring, dot], "css");
     let shown = false, lx = -1, ly = -1, scrollQueued = false;
     window.addEventListener("pointermove", (e) => {
       if (e.pointerType !== "mouse") return;
       lx = e.clientX; ly = e.clientY;
-      if (!shown) { shown = true; c.classList.add("is-on"); gsap.set([ring, dot], { x: e.clientX, y: e.clientY }); }
-      rx(e.clientX); ry(e.clientY); dx(e.clientX); dy(e.clientY);
+      if (!shown) { shown = true; c.classList.add("is-on"); }
+      moveTo({ x: e.clientX, y: e.clientY });
     }, { passive: true });
     doc.documentElement.addEventListener("pointerleave", () => { shown = false; c.classList.remove("is-on"); });
     doc.addEventListener("pointerdown", () => c.classList.add("is-down"));
