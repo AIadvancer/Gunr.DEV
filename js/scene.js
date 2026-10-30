@@ -95,8 +95,8 @@ function init(THREE) {
   const DPR_CAP = small ? 1.5 : 2;
   // Fewer particles -> each one carries a bit more light.
   // Capped lower on phones, where the field sits behind body copy.
-  const BASE_ALPHA = Math.min(small ? 0.5 : 0.85, 0.42 * Math.sqrt(14000 / COUNT));
-  const WORLD_SIZE = small ? 0.012 : 0.0135; // particle diameter in world units at focus
+  const BASE_ALPHA = Math.min(small ? 0.5 : 0.85, 0.55 * Math.sqrt(14000 / COUNT));
+  const WORLD_SIZE = small ? 0.016 : 0.0175; // particle diameter in world units at focus
 
   /* ---- deterministic randomness ------------------------------------------ */
   let seed = 0x6a7e21;
@@ -419,7 +419,7 @@ function init(THREE) {
         vAlpha *= (1.0 - 0.6 * smoothstep(0.0, 0.25, length(disp))) * uDim;
         // Core/embedding: thin the centre so additive stacking can't blow out to white.
         float cw = (uFrom < 1.5 ? 1.0 - m : 0.0) + (uTo < 1.5 ? m : 0.0);
-        vAlpha *= mix(1.0, 0.3 + 0.7 * smoothstep(0.0, 0.5 * uFit, length(p)), cw);
+        vAlpha *= mix(1.0, 0.12 + 0.88 * smoothstep(0.0, 0.65 * uFit, length(p)), cw);
         vBlur = blur;
         vAccent = step(aRand.w, uAccentRatio);
       }
@@ -430,7 +430,7 @@ function init(THREE) {
       void main(){
         float d = length(gl_PointCoord - 0.5) * 2.0;
         if (d > 1.0) discard;
-        float sharp = mix(7.0, 2.2, clamp(vBlur, 0.0, 1.0));
+        float sharp = mix(5.0, 2.0, clamp(vBlur, 0.0, 1.0));
         float a = exp(-d * d * sharp) * (1.0 - smoothstep(0.7, 1.0, d)) * vAlpha;
         vec3 col = mix(uBase, uAccent, vAccent);
         gl_FragColor = vec4(col * a, a);
@@ -561,8 +561,8 @@ function init(THREE) {
   const OFFSETS = [0.38, 0.4, 0.16, 0.06, 0, 0];
   const wide = () => view.aspect > 1.15 && !small;
   // Per-section brightness: dimmer where dense copy sits on top of the field.
-  const DIM = [1, 0.7, 0.45, 0.5, 0.85, 1];
-  const DIM_SMALL = [0.8, 0.5, 0.4, 0.45, 0.7, 1];
+  const DIM = [1, 0.85, 0.65, 0.7, 0.9, 1];
+  const DIM_SMALL = [0.9, 0.7, 0.55, 0.6, 0.8, 1];
 
   const clamp01 = (v) => Math.min(1, Math.max(0, v));
   const smooth = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
@@ -826,4 +826,7 @@ function init(THREE) {
   }
 
   document.dispatchEvent(new CustomEvent('gunr:scene-ready', { detail: api }));
+  // The loader may have finished (or been skipped) before three.js loaded, so its
+  // burst() never reached us: give the field its entrance now instead.
+  if (window.GUNR_BOOT && window.GUNR_BOOT.done) api.burst();
 }
