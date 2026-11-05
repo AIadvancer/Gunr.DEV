@@ -1,5 +1,5 @@
 /* =============================================================================
- * GUNR//OS — gpt.js  ("gunr-gpt")
+ * GUNR//OS — assistant.js  ("gunr-gpt"). Not named gpt.js: ad blockers block that path (Google Publisher Tag).
  * -----------------------------------------------------------------------------
  * A tiny, honest, offline assistant. It is NOT a language model: it matches the
  * question to an intent (weighted patterns + entities found in PROFILE) and

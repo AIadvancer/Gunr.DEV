@@ -8,7 +8,7 @@
  *   GOS.term      js/os/term.js      prompt, input, blocks, output builder, chips
  *   GOS.wm        js/os/wm.js        tiling window manager / mobile sheets
  *   GOS.palette   js/os/palette.js   Ctrl+K command palette
- *   GOS.gpt       js/os/gpt.js       local "gunr-gpt" assistant over PROFILE
+ *   GOS.gpt       js/os/assistant.js local "gunr-gpt" assistant over PROFILE
  *   GOS.desktop   js/os/desktop.js   boot/login, status bar, workspaces, themes
  *   (commands)    js/os/commands.js  registers every command via GOS.commands
  * ========================================================================== */

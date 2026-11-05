@@ -328,7 +328,7 @@ js/os/gos.js          kernel: event bus, command registry, motion, storage, help
 js/os/term.js         the gsh terminal (prompt, input, blocks, chips)
 js/os/wm.js           tiling window manager + mobile bottom sheets
 js/os/palette.js      Ctrl+K command palette
-js/os/gpt.js          gunr-gpt (offline, answers from content.js)
+js/os/assistant.js    gunr-gpt (offline, answers from content.js)
 js/os/commands.js     every command
 js/os/desktop.js      boot/login, status bar, workspaces, themes, sfx, wallpaper, Plain view (loads last)
 js/scene.js           WebGL particle wallpaper     js/vcard.js  js/qr.js   shared with card.html and v2
