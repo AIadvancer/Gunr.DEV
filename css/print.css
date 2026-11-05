@@ -1,7 +1,7 @@
 /* =============================================================================
  * GUNR.DEV — print.css
  * Styles for card.html, the printable networking kit. card.html does not load
- * style.css, so the brand tokens are defined here too (keep them in sync).
+ * css/os.css, so the brand tokens are defined here too (keep them in sync).
  *
  *   1. Tokens + base (screen UI)
  *   2. Screen UI: top bar, intro, live QR, form, buttons, alerts, tips, toast

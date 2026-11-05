@@ -1,5 +1,11 @@
 # ASSET_PROMPTS.md — generating the GUNR.DEV v2 media locally
 
+> **GUNR//OS (v3) note.** In v3 the hero poster and loop (`hero-poster.webp`, `hero-loop.*`, and the
+> mobile variants) are reused as the **animated desktop wallpaper** behind the terminal windows, in
+> `#wallpaper-media`. The layer is screen-blended over the particle canvas, so **pure black still matters**:
+> anything that is not true black brightens the whole desktop. The slots, sizes, budgets and loading rules
+> below are unchanged. References to "the hero" below now mean the desktop wallpaper.
+
 How to make every media file in `assets/` for the v2 "Forward Pass" design on a local 24 GB GPU.
 
 **Every file is optional.** The site renders its particle scene in code, and media only appears after it

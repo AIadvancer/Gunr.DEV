@@ -1,9 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="gunr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>404 · Token not found · GUNR</title>
+  <title>404 · No such file · GUNR//OS</title>
+  <meta name="description" content="This path does not exist on GUNR//OS. Head back to the terminal.">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0B0B0C">
   <meta name="color-scheme" content="dark">
@@ -12,126 +13,162 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B0B0C'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23FF5A1F'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&amp;family=Geist+Mono:wght@400;500&amp;family=Instrument+Serif:ital@0;1&amp;display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&amp;display=swap">
   <style>
+    /* gunr is the brand palette; the others are a minimal subset of the
+       GUNR//OS themes so a visitor's saved theme (gos.theme) carries over. */
     :root {
-      --ink: #0B0B0C; --ink-2: #111113; --paper: #EDEAE4; --paper-dim: #9A968F;
-      --line: rgba(237, 234, 228, .10); --line-2: rgba(237, 234, 228, .22); --signal: #FF5A1F;
-      --f-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      --f-serif: "Instrument Serif", "Times New Roman", Georgia, serif;
-      --f-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      --gutter: clamp(16px, 4vw, 56px);
-      --ease-out: cubic-bezier(.16, 1, .3, 1);
+      --bg: #0B0B0C; --surface: #141416; --line: rgba(237, 234, 228, .12);
+      --fg: #EDEAE4; --fg-dim: #9A968F; --accent: #FF5A1F; --accent-2: #8AB0F8;
+      --c-red: #FF6B5E; --c-green: #A8D672; --c-yellow: #F2C46D;
+      --f-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --ease: cubic-bezier(.16, 1, .3, 1);
       color-scheme: dark;
     }
-    :root[data-theme="lime"] { --signal: #C8F04A; }
-    :root[data-theme="cyan"] { --signal: #5CE1E6; }
+    html[data-theme="tokyo-night"] { --bg: #1A1B26; --surface: #1F2335; --fg: #C0CAF5; --fg-dim: #9AA5CE; --accent: #7AA2F7; --accent-2: #BB9AF7; --c-red: #F7768E; --c-green: #9ECE6A; --c-yellow: #E0AF68; --line: rgba(192, 202, 245, .12); }
+    html[data-theme="catppuccin"]  { --bg: #1E1E2E; --surface: #181825; --fg: #CDD6F4; --fg-dim: #A6ADC8; --accent: #CBA6F7; --accent-2: #89B4FA; --c-red: #F38BA8; --c-green: #A6E3A1; --c-yellow: #F9E2AF; --line: rgba(205, 214, 244, .12); }
+    html[data-theme="gruvbox"]     { --bg: #282828; --surface: #1D2021; --fg: #EBDBB2; --fg-dim: #BDAE93; --accent: #FE8019; --accent-2: #83A598; --c-red: #FB4934; --c-green: #B8BB26; --c-yellow: #FABD2F; --line: rgba(235, 219, 178, .12); }
+    html[data-theme="nord"]        { --bg: #2E3440; --surface: #3B4252; --fg: #ECEFF4; --fg-dim: #D8DEE9; --accent: #88C0D0; --accent-2: #81A1C1; --c-red: #E07A84; --c-green: #A3BE8C; --c-yellow: #EBCB8B; --line: rgba(236, 239, 244, .14); }
+    html[data-theme="rose-pine"]   { --bg: #191724; --surface: #1F1D2E; --fg: #E0DEF4; --fg-dim: #908CAA; --accent: #EBBCBA; --accent-2: #9CCFD8; --c-red: #EB6F92; --c-green: #9CCFD8; --c-yellow: #F6C177; --line: rgba(224, 222, 244, .12); }
+    html[data-theme="matrix"]      { --bg: #000000; --surface: #050A06; --fg: #B8FFC8; --fg-dim: #5FD47E; --accent: #00FF66; --accent-2: #7CFFB0; --c-red: #FF6B6B; --c-green: #00FF66; --c-yellow: #D4FF5C; --line: rgba(0, 255, 102, .16); }
+
     *, *::before, *::after { box-sizing: border-box; }
-    html { background: var(--ink); }
+    html { background: var(--bg); }
     body {
       margin: 0;
       min-height: 100vh;
       min-height: 100svh;
-      display: flex;
-      flex-direction: column;
-      padding: calc(20px + env(safe-area-inset-top)) var(--gutter) calc(24px + env(safe-area-inset-bottom));
+      display: grid;
+      place-items: center;
+      padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
       background:
-        radial-gradient(50% 45% at 78% 30%, color-mix(in srgb, var(--signal) 8%, transparent), transparent 70%),
-        var(--ink);
-      color: var(--paper);
-      font: 400 16px/1.55 var(--f-sans);
+        radial-gradient(60% 50% at 70% 20%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%),
+        radial-gradient(50% 40% at 15% 90%, color-mix(in srgb, var(--accent-2) 7%, transparent), transparent 70%),
+        var(--bg);
+      color: var(--fg);
+      font: 400 14.5px/1.65 var(--f-mono);
+      font-variant-ligatures: contextual;
       -webkit-font-smoothing: antialiased;
       overflow-x: clip;
     }
-    body::after {
-      content: "";
-      position: fixed;
-      inset: -50%;
-      pointer-events: none;
-      opacity: .055;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      animation: grain 1.2s steps(6) infinite;
+
+    .win {
+      width: min(680px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .04) inset, 0 30px 80px -20px rgba(0, 0, 0, .7), 0 0 0 1px rgba(0, 0, 0, .4);
+      overflow: hidden;
     }
-    @keyframes grain { 0%, 100% { transform: none; } 33% { transform: translate(-3%, 2%); } 66% { transform: translate(2%, -3%); } }
-    .label { font: 500 11px/1.5 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--paper-dim); }
-    header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-    .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--paper); text-decoration: none; font: 500 13px var(--f-mono); letter-spacing: .2em; }
-    .brand i { width: 8px; height: 8px; border-radius: 50%; background: var(--signal); }
-    main { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 64px 0; max-width: 1200px; }
-    .row { display: flex; align-items: center; gap: 14px; margin: 0 0 28px; }
-    .row b { color: var(--signal); font-weight: 500; }
-    .row i { flex: 0 1 120px; height: 1px; background: var(--line-2); }
-    h1 {
-      margin: 0 0 32px;
-      font: 400 clamp(3.6rem, 13vw, 11rem)/.88 var(--f-serif);
-      letter-spacing: -.03em;
+    .motion-full .win { animation: pop .7s var(--ease) both; }
+    @keyframes pop { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+
+    .bar {
+      display: flex; align-items: center; gap: 10px;
+      height: 34px; padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12.5px; color: var(--fg-dim);
     }
-    h1 em { color: var(--signal); }
-    h1 span { display: block; overflow: clip; padding-bottom: .08em; }
-    h1 span > span { display: block; animation: rise 1.2s var(--ease-out) both; }
-    h1 span:nth-child(2) > span { animation-delay: .1s; }
-    @keyframes rise { from { transform: translateY(110%); } }
-    .code { margin: 0 0 40px; font: 400 14px/1.8 var(--f-mono); color: var(--paper-dim); overflow-wrap: anywhere; }
-    .code .v { color: var(--paper); }
-    .code .s { color: var(--signal); }
-    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
-    .btn {
-      position: relative; overflow: hidden; isolation: isolate;
-      display: inline-flex; align-items: center; justify-content: center;
-      min-height: 52px; padding: 0 24px;
-      border: 1px solid var(--line-2); border-radius: 999px;
-      color: var(--paper); font: 500 15px/1 var(--f-sans); text-decoration: none;
-      transition: color .5s var(--ease-out), border-color .5s;
+    .bar .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+    .bar .t { color: var(--fg); }
+    .bar .p { margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .body { padding: 18px 18px 22px; }
+    .prompt { display: flex; flex-wrap: wrap; align-items: center; gap: 0; margin: 0 0 4px; font-size: 12.5px; }
+    .seg {
+      position: relative; padding: 2px 14px 2px 12px; margin-right: -4px;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%, 8px 50%);
+      background: color-mix(in srgb, var(--fg) 10%, var(--surface)); color: var(--fg);
     }
-    .btn::before {
-      content: ""; position: absolute; inset: -1px; z-index: -1; border-radius: inherit;
-      background: var(--paper); transform: translateY(102%); transition: transform .6s var(--ease-out);
+    .seg:first-child { clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%); border-radius: 6px 0 0 6px; background: var(--accent); color: var(--bg); font-weight: 700; }
+    .seg.err { background: color-mix(in srgb, var(--c-red) 22%, var(--surface)); color: var(--fg); }
+    .line { margin: 0; overflow-wrap: anywhere; }
+    .chev { color: var(--c-red); font-weight: 700; }
+    .cmd { color: var(--c-green); }
+    h1 { margin: 10px 0 16px; font: inherit; font-weight: 500; overflow-wrap: anywhere; }
+    h1 .tag { color: var(--c-red); }
+    h1 code { font: inherit; color: var(--c-yellow); }
+    .hint { margin: 0 0 10px; color: var(--fg-dim); }
+
+    ul { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 6px; }
+    a.go {
+      display: flex; align-items: center; gap: 12px;
+      min-height: 44px; padding: 8px 12px;
+      border: 1px solid var(--line); border-radius: 8px;
+      color: var(--fg); text-decoration: none;
+      transition: border-color .3s var(--ease), background-color .3s var(--ease), transform .3s var(--ease);
     }
-    .btn:hover, .btn:focus-visible { color: var(--ink); border-color: var(--paper); }
-    .btn:hover::before, .btn:focus-visible::before { transform: none; }
-    .btn.primary { background: var(--signal); border-color: var(--signal); color: var(--ink); }
-    :focus-visible { outline: 1px solid var(--signal); outline-offset: 4px; }
-    footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); padding-top: 20px; }
-    @media (max-width: 599.98px) { .btn { flex: 1 1 100%; } footer span:last-child { display: none; } }
-    /* Same motion contract as the site: ?motion=full|reduced, else the OS setting. */
-    .motion-reduced body::after, .motion-reduced h1 span > span { animation: none; }
+    a.go .k { color: var(--accent-2); min-width: 7ch; }
+    a.go .d { color: var(--fg-dim); }
+    a.go .a { margin-left: auto; color: var(--accent); opacity: 0; transition: opacity .3s, transform .3s var(--ease); }
+    a.go:hover, a.go:focus-visible { border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+    a.go:hover .a, a.go:focus-visible .a { opacity: 1; transform: translateX(2px); }
+    .motion-full a.go:hover { transform: translateX(3px); }
+    a.go.primary { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+    a.go.primary .k { color: var(--accent); font-weight: 700; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    .caret-line { margin: 0; color: var(--accent); }
+    .caret { display: inline-block; width: .6em; height: 1.15em; vertical-align: -.2em; margin-left: 2px; background: var(--accent); border-radius: 1px; }
+    .motion-full .caret { animation: blink 1.1s ease-in-out infinite; }
+    @keyframes blink { 50% { opacity: .15; } }
+
+    @media (max-width: 480px) {
+      body { font-size: 14px; }
+      .bar .p { display: none; }
+      a.go { flex-wrap: wrap; row-gap: 0; }
+      a.go .d { flex-basis: 100%; font-size: 12.5px; }
+      a.go .a { display: none; }
+    }
   </style>
   <script>
     (function () {
-      var q = /[?&]motion=(full|reduced)\b/.exec(location.search);
-      var full = q ? q[1] === "full" : !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
-      window.GUNR_MOTION = { full: full };
-      if (!full) document.documentElement.classList.add("motion-reduced");
+      var root = document.documentElement;
+      function get(s, k) { try { return window[s].getItem(k); } catch (e) { return null; } }
+      // Same motion contract as GUNR//OS: ?motion= wins, then the saved choice, then the OS.
+      var q = (/[?&]motion=(full|reduced)\b/.exec(location.search) || [])[1];
+      var saved = get("localStorage", "gunr.motion");
+      var full = q ? q === "full"
+        : (saved === "full" || saved === "reduced") ? saved === "full"
+        : !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+      root.classList.add(full ? "motion-full" : "motion-reduced");
+      var themes = ["gunr", "tokyo-night", "catppuccin", "gruvbox", "nord", "rose-pine", "matrix"];
+      var t = get("localStorage", "gos.theme");
+      if (themes.indexOf(t) >= 0) root.setAttribute("data-theme", t);
     })();
-    try {
-      var t = { green: "lime", amber: "signal", cyan: "cyan", lime: "lime", signal: "signal" }[localStorage.getItem("gunr.theme")];
-      if (t) document.documentElement.setAttribute("data-theme", t);
-    } catch (e) {}
   </script>
 </head>
 <body>
-  <header>
-    <a class="brand" id="brand" href="/"><i aria-hidden="true"></i>GUNR</a>
-    <span class="label">Error 404</span>
-  </header>
-  <main>
-    <p class="row label"><b>(??)</b> <i aria-hidden="true"></i> Unknown layer</p>
-    <h1><span><span>Token not</span></span><span><span><em>found.</em></span></span></h1>
-    <p class="code">vocab.encode(<span class="v" id="path">"/this-page"</span>) &rarr; <span class="s">&lt;unk&gt;</span><br>re-routing to the input layer.</p>
-    <div class="actions">
-      <a class="btn primary" id="home" href="/">Return home</a>
-      <a class="btn" id="contact" href="/#layer-output">Jump to contact</a>
+  <main class="win" aria-labelledby="err">
+    <div class="bar" aria-hidden="true">
+      <span class="dot"></span><span class="t">gsh</span><span>GUNR//OS</span>
+      <span class="p" id="bar-path">~</span>
+    </div>
+    <div class="body">
+      <div class="prompt" aria-hidden="true">
+        <span class="seg">guest@gunr</span><span class="seg" id="seg-path">~</span><span class="seg err">&#x2717; 404</span>
+      </div>
+      <p class="line" aria-hidden="true"><span class="chev">&#x276F;</span> <span class="cmd">cd</span> <span id="cmd-path">/</span></p>
+      <h1 id="err"><span class="tag">gsh:</span> no such file or directory: <code id="path">/</code></h1>
+      <p class="hint">This page doesn't exist (error 404). Pick a way back:</p>
+      <ul>
+        <li><a class="go primary" id="home" href="/"><span class="k">home</span><span class="d">Back to the GUNR//OS terminal</span><span class="a" aria-hidden="true">&#x2192;</span></a></li>
+        <li><a class="go" id="card" href="/card.html"><span class="k">card</span><span class="d">Printable networking card and QR code</span><span class="a" aria-hidden="true">&#x2192;</span></a></li>
+        <li><a class="go" id="v2" href="/v2/"><span class="k">v2</span><span class="d">The previous design, Forward Pass (archive)</span><span class="a" aria-hidden="true">&#x2192;</span></a></li>
+      </ul>
+      <p class="caret-line" aria-hidden="true">&#x276F;<span class="caret"></span></p>
     </div>
   </main>
-  <footer class="label">
-    <span>GUNR.DEV</span>
-    <span>The forward pass continues at home</span>
-  </footer>
   <script>
     (function () {
       var path = location.pathname || "/";
-      var el = document.getElementById("path");
-      if (el) el.textContent = JSON.stringify(decodeSafe(path));
+      var shown;
+      try { shown = decodeURIComponent(path); } catch (e) { shown = path; }
+      if (shown.length > 120) shown = shown.slice(0, 117) + "...";
+      ["path", "cmd-path", "seg-path", "bar-path"].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = shown;
+      });
 
       // Site root: "/" on a custom domain, "/<repo>/" on a github.io project page.
       var base = "/";
@@ -139,11 +176,11 @@
         var seg = path.split("/")[1];
         if (seg && seg.indexOf(".") === -1) base = "/" + seg + "/";
       }
-      document.getElementById("home").setAttribute("href", base);
-      document.getElementById("brand").setAttribute("href", base);
-      document.getElementById("contact").setAttribute("href", base + "#layer-output");
-
-      function decodeSafe(s) { try { return decodeURIComponent(s); } catch (e) { return s; } }
+      var links = { home: "", card: "card.html", v2: "v2/" };
+      Object.keys(links).forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.setAttribute("href", base + links[id]);
+      });
     })();
   </script>
 </body>
