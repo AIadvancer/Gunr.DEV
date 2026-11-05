@@ -438,8 +438,17 @@
     if (w.opts.closable === false) { nudge(w); return false; }
     w.closing = true;
     w.el.classList.add("is-closing");
+    // An unfinished spawn tween would otherwise overwrite the close tween (GSAP
+    // overwrite:"auto"), its onComplete would never fire, and the window would
+    // linger on screen, out of the layout, under its replacement.
+    killAnims(w.el);
+    w.spawning = false;
+    w.el.classList.remove("is-spawning");
     var hadFocus = w.el.contains(doc.activeElement);
+    var finished = false;
     function finish() {
+      if (finished) return;
+      finished = true;
       if (w.el.parentNode) w.el.parentNode.removeChild(w.el);
       delete wins[id];
       order = order.filter(function (x) { return x !== id; });
@@ -453,6 +462,7 @@
       if (next && next !== w) focus(next.id);
     }
     if (hadFocus && GOS.term && GOS.term.focus) GOS.term.focus();
+    setTimeout(finish, 900); // safety net if a close animation is ever killed before it completes
     if (isSheet(w) && !w.el.hidden) { hideSheet(w, { cb: finish }); return true; }
     if (w.el.hidden) { finish(); return true; }
     layout(true); // neighbours flow into the space while this one shrinks away
@@ -475,9 +485,18 @@
     }
     if (isSheet(w)) {
       if (w.el.hidden || sheetId !== id) showSheet(w);
-    } else if ((!w.z || w.z < z) && !(mode === "mobile" && isMainKind(w))) { // on phones the terminal stays the base layer
-      w.z = ++z;
-      w.el.style.zIndex = String(w.z);
+    } else {
+      if ((!w.z || w.z < z) && !(mode === "mobile" && isMainKind(w))) { // on phones the terminal stays the base layer
+        w.z = ++z;
+        w.el.style.zIndex = String(w.z);
+      }
+      // A maximized window must never end up buried: bringing any other window
+      // forward restores it to its tile (tiling-WM behaviour) instead.
+      if (mode !== "mobile") {
+        var mx = null;
+        order.forEach(function (x) { var o = wins[x]; if (o && o !== w && o.max && !o.closing) mx = o; });
+        if (mx) { setMax(mx, false); layout(true); GOS.emit("wm:max", { id: mx.id, max: false }); }
+      }
     }
     if (o.dom && !w.el.contains(doc.activeElement)) {
       try { w.el.focus({ preventScroll: true }); } catch (e) { w.el.focus(); }

@@ -1650,6 +1650,8 @@
       input.value = "";
       bubble("me", [h("p", null, q)]);
       var typing = bubble("bot", [h("span", { "class": "chat-typing", "aria-label": "gunr-gpt is typing" }, [h("i"), h("i"), h("i")])]);
+      // Look the engine up per question: it may have loaded after this window opened.
+      G = gpt() || G;
       var a = G ? G.answer(q) : { text: "gunr-gpt isn't available right now — try the contact card.", cmds: ["contact"], confidence: 0 };
       setTimeout(function () {
         var bub = typing.querySelector(".chat-bub");
