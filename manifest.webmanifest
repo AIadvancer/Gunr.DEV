@@ -1,7 +1,7 @@
 {
-  "name": "GUNR // Gunnar Patterson",
-  "short_name": "GUNR",
-  "description": "Run the forward pass: Gunnar Patterson, IT Specialist and AI researcher.",
+  "name": "GUNR//OS · Gunnar Patterson",
+  "short_name": "GUNR//OS",
+  "description": "A terminal you can tap: Gunnar Patterson, IT Specialist and AI researcher. Save the contact, browse research and experience, or ask gunr-gpt.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

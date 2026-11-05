@@ -68,7 +68,7 @@ if (canvas) {
 }
 
 if (!canvas) {
-  // Nothing to draw into; stay silent so journey.js simply runs without a scene.
+  // Nothing to draw into; stay silent so the OS runs without a scene.
 } else if (!gl) {
   fail();
 } else {

@@ -1,219 +1,179 @@
 <!doctype html>
-<html lang="en" class="no-js">
+<html lang="en" class="no-js" data-theme="gunr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 
-  <!-- Social / search preview copy. Crawlers do not run JavaScript, so these few
-       known facts are duplicated here; keep them in sync with js/content.js.
-       journey.js overwrites <title> and the description from PROFILE at runtime. -->
-  <title>Gunnar Patterson · GUNR</title>
-  <meta name="description" content="Gunnar Patterson (GUNR): IT Specialist at Moorhead Holdings and long-time AI researcher. Run the forward pass and save my contact.">
+  <!-- Search / social preview. Crawlers do not run JavaScript, so these facts are
+       duplicated from js/content.js; keep them in sync. desktop.js refreshes the
+       title and description from PROFILE at runtime. -->
+  <title>Gunnar Patterson · GUNR//OS</title>
+  <meta name="description" content="Gunnar Patterson (GUNR): IT Specialist at Moorhead Holdings and long-time AI researcher. A terminal you can explore by tapping. Save my contact in one tap.">
+  <meta name="author" content="Gunnar Patterson">
   <meta name="theme-color" content="#0B0B0C">
   <meta name="color-scheme" content="dark">
 
-  <!-- Absolute URLs are required by Open Graph (domain: gunr.dev). -->
   <link rel="canonical" href="https://gunr.dev/">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://gunr.dev/">
   <meta property="og:site_name" content="GUNR.DEV">
-  <meta property="og:title" content="Gunnar Patterson · GUNR">
-  <meta property="og:description" content="IT Specialist at Moorhead Holdings. Years of AI research. Run the forward pass and save my contact.">
+  <meta property="og:title" content="Gunnar Patterson · GUNR//OS">
+  <meta property="og:description" content="IT Specialist at Moorhead Holdings. Years of AI research. A terminal-first site — tap anything to explore, or save my contact.">
+  <meta property="og:locale" content="en_US">
   <!-- Preview image: once assets/og.png (1200x630) exists, add og:image (+ :width/:height/:alt)
        and twitter:image pointing at https://gunr.dev/assets/og.png, and set twitter:card to
        summary_large_image. Left out until then so crawlers don't report a broken image. -->
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Gunnar Patterson · GUNR">
-  <meta name="twitter:description" content="IT Specialist at Moorhead Holdings. Years of AI research. Run the forward pass and save my contact.">
+  <meta name="twitter:title" content="Gunnar Patterson · GUNR//OS">
+  <meta name="twitter:description" content="IT Specialist at Moorhead Holdings. Years of AI research. A terminal-first site — tap anything to explore, or save my contact.">
 
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="alternate icon" href="favicon.ico" sizes="32x32">
   <link rel="manifest" href="manifest.webmanifest">
 
-  <!-- Runs before first paint. Decides the motion mode once for every script:
-       ?motion=full|reduced wins, then the visitor's saved choice (localStorage
-       "gunr.motion"), then the OS preference. Also restores the theme, decides
-       whether the loader shows (once per session) and owns the Motion switch. -->
+  <!-- The kernel: namespace, bus, command registry, motion + theme before first paint. -->
+  <script src="js/os/gos.js"></script>
   <script>
-    (function (w, d) {
-      var h = d.documentElement;
-      h.className = h.className.replace("no-js", "js");
-      var KEY = "gunr.motion";
-      var q = /[?&]motion=(full|reduced)\b/.exec(w.location.search);
-      var stored = null;
-      try { stored = localStorage.getItem(KEY); } catch (e) {}
-      if (stored !== "full" && stored !== "reduced") stored = null;
-      var prefersReduced = !!(w.matchMedia && w.matchMedia("(prefers-reduced-motion: reduce)").matches);
-      var full, source;
-      if (q) { full = q[1] === "full"; source = "url"; }
-      else if (stored) { full = stored === "full"; source = "stored"; }
-      else { full = !prefersReduced; source = "system"; }
-
-      // set("full" | "reduced"): save the choice, fade the page out and reload into it
-      // (loader skipped). Without storage the choice rides along as ?motion= instead.
-      function set(mode) {
-        var f = mode === "full" || mode === true, v = f ? "full" : "reduced", ok = false;
-        try { localStorage.setItem(KEY, v); ok = localStorage.getItem(KEY) === v; } catch (e) {}
-        try { sessionStorage.setItem("gunr.booted", "1"); } catch (e) {}
-        // Remembered for journey.js: same scroll position after the reload, focus back
-        // on the switch if it had it, and a toast announcing the new mode.
-        try {
-          var a = d.activeElement;
-          sessionStorage.setItem("gunr.motionReturn", JSON.stringify({
-            y: w.scrollY || w.pageYOffset || 0,
-            focus: !!(a && a.closest && a.closest("[data-motion-toggle]"))
-          }));
-        } catch (e) {}
-        h.classList.add("motion-switching");
+    /* First-paint decisions that must not wait for the deferred scripts:
+       plain view (session), and whether the boot/login intro covers the screen
+       (first visit per session, full motion only). If desktop.js never arrives
+       the page falls back to the plain profile instead of a blank desktop. */
+    (function () {
+      var G = window.GOS, h = document.documentElement;
+      if (!G) { h.classList.add("plain"); return; }
+      var plain = G.store.sget("gos.plain") === "1" || location.hash === "#plain";
+      if (plain) h.classList.add("plain");
+      else if (G.motion.full && G.store.sget("gos.booted") !== "1") h.classList.add("is-booting");
+      document.addEventListener("DOMContentLoaded", function () {
         setTimeout(function () {
-          var l = w.location;
-          var s = l.search.replace(/([?&])motion=(full|reduced)\b&?/, "$1").replace(/[?&]$/, "");
-          if (!ok) s += (s ? "&" : "?") + "motion=" + v;
-          if (s === l.search) l.reload();
-          else l.replace(l.pathname + s + l.hash);
-        }, 250);
-      }
-      // Keeps every [data-motion-toggle] switch's aria-checked in step with the mode.
-      function sync() {
-        var t = d.querySelectorAll("[data-motion-toggle]");
-        for (var i = 0; i < t.length; i++) t[i].setAttribute("aria-checked", String(full));
-      }
-      w.GUNR_MOTION = { full: full, source: source, set: set, sync: sync };
-      h.classList.add(full ? "motion-full" : "motion-reduced");
-      d.addEventListener("DOMContentLoaded", sync);
-      d.addEventListener("click", function (e) {
-        var t = e.target && e.target.closest && e.target.closest("[data-motion-toggle]");
-        if (!t) return;
-        e.preventDefault();
-        set(full ? "reduced" : "full");
+          if (G.desktop) return;
+          h.classList.remove("is-booting");
+          h.classList.add("plain");
+          h.setAttribute("data-failsafe", "1");
+        }, 60);
       });
-      // Back/forward cache can restore the faded-out page; bring it back.
-      w.addEventListener("pageshow", function (e) { if (e.persisted) h.classList.remove("motion-switching"); });
-
-      var LEGACY = { green: "lime", amber: "signal", cyan: "cyan", lime: "lime", signal: "signal" };
-      try {
-        var t = LEGACY[localStorage.getItem("gunr.theme")];
-        if (t) h.setAttribute("data-theme", t);
-      } catch (e) {}
-
-      var seen = false;
-      try { seen = sessionStorage.getItem("gunr.booted") === "1"; } catch (e) {}
-      h.classList.add(seen || !full ? "no-boot" : "is-booting");
-
-      // Failsafes: never keep the loader up, or content hidden, if a script failed.
-      setTimeout(function () {
-        if (!w.GUNR_BOOT) { h.classList.add("no-boot"); h.classList.remove("is-booting"); }
-      }, 6000);
-      setTimeout(function () { if (!w.GUNR_JOURNEY_READY) h.classList.add("reveal-all"); }, 4000);
-    })(window, document);
-  </script>
-
-  <script type="importmap">
-    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js" } }
+    })();
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Classic scripts are fetched no-cors, the three.js module with CORS: warm both. -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&amp;family=Geist+Mono:wght@400;500&amp;family=Instrument+Serif:ital@0;1&amp;display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&amp;family=Geist+Mono:wght@400;500&amp;family=Instrument+Serif:ital@0;1&amp;display=swap"></noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&amp;family=Instrument+Serif:ital@0;1&amp;family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&amp;display=swap">
 
-  <link rel="stylesheet" href="css/style.css">
-  <!-- The terminal overlay is built on demand, so its CSS need not block first paint. -->
-  <link rel="stylesheet" href="css/terminal.css" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="css/terminal.css"></noscript>
+  <link rel="stylesheet" href="css/os.css">
+  <link rel="stylesheet" href="css/apps.css">
+
+  <noscript>
+    <style>
+      .desktop, .boot, .palette, .toasts, .skip-link, [data-js-only] { display: none !important; }
+      #plain { display: block !important; }
+    </style>
+  </noscript>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
+  <a class="skip-link" href="#plain" data-plain-link>Skip to plain-text profile</a>
 
-  <!-- Loader (first visit per session, full motion only); js/boot.js drives it. -->
-  <div id="boot" class="boot" role="dialog" aria-modal="true" aria-label="Loading">
-    <div class="boot-top">
-      <span class="boot-mark"><i aria-hidden="true"></i>GUNR</span>
-      <button type="button" class="boot-skip" id="boot-skip">Skip intro <span aria-hidden="true">&rarr;</span></button>
-    </div>
-    <div class="boot-bottom">
-      <p class="boot-label"><span>Loading weights</span> <span class="boot-file" id="boot-file">model.safetensors</span></p>
-      <p class="boot-count" aria-hidden="true"><span class="boot-digit"><i>0</i></span><span class="boot-digit"><i>0</i></span><span class="boot-digit"><i>0</i></span></p>
-      <div class="boot-bar" aria-hidden="true"><i id="boot-bar"></i></div>
-    </div>
+  <!-- Wallpaper: particle field (scene.js), optional hero media, veil + grain. -->
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <div id="wallpaper-media" class="wallpaper-media" aria-hidden="true"></div>
+  <div class="wallpaper-veil" aria-hidden="true"></div>
+
+  <div id="desktop" class="desktop">
+    <header id="bar" class="bar"></header>
+    <main id="wm" class="wm" aria-label="Terminal desktop"></main>
+    <nav id="dock" class="dock" aria-label="Quick commands"></nav>
   </div>
-  <script>
-    // "Skip intro" works even before boot.js arrives.
-    document.getElementById("boot-skip").addEventListener("click", function () {
-      if (!window.GUNR_BOOT) { document.documentElement.classList.add("no-boot"); document.documentElement.classList.remove("is-booting"); }
-    });
-  </script>
 
-  <!-- Background layers: static backdrop (WebGL fallback), the particle scene, the hero
-       media (optional loop/poster, filled by journey.js), film grain. The hero media lives
-       here rather than inside the hero so its mix-blend-mode: screen reaches the canvas
-       (.app is its own stacking context); it is absolutely positioned over the hero. -->
-  <div class="backdrop" aria-hidden="true"></div>
-  <canvas id="scene" class="scene" aria-hidden="true"></canvas>
-  <div class="hero-media" id="hero-media" aria-hidden="true"><div class="hero-media-in"></div></div>
-  <div class="grain" aria-hidden="true"></div>
+  <div id="boot" class="boot" aria-hidden="true"></div>
+  <div id="palette" class="palette" hidden></div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
 
-  <div id="app" class="app">
-    <header class="topbar" id="topbar">
-      <a class="brand" href="#layer-input" aria-label="GUNR, back to top"><i class="brand-dot" aria-hidden="true"></i><span>GUNR</span></a>
-      <p class="topbar-layer" aria-hidden="true"><span class="topbar-idx" id="topbar-idx">00</span><span class="topbar-name" id="topbar-layer">Input</span></p>
-      <div class="topbar-end">
-        <!-- Motion switch; the head script binds every [data-motion-toggle]. -->
-        <button type="button" class="motion-toggle" role="switch" aria-checked="false" data-motion-toggle title="Background animation">
-          <span class="mt-label">Motion</span><span class="mt-pill" aria-hidden="true"><i></i></span>
-        </button>
-        <a class="topbar-cta u-link" href="#layer-output">Contact</a>
-      </div>
-      <span class="topbar-progress" aria-hidden="true"><i id="progress-fill"></i></span>
-    </header>
-
-    <!-- Desktop section index; rendered by journey.js. -->
-    <nav class="index" id="section-index" aria-label="Sections"></nav>
-
-    <main id="main" tabindex="-1">
-      <div id="journey" class="journey"></div>
-
+  <!-- Plain view. This static copy is what crawlers and no-JS visitors read;
+       desktop.js re-renders it from js/content.js. -->
+  <section id="plain" class="plain" aria-label="Plain-text profile" tabindex="-1">
+    <div class="plain-wrap">
       <noscript>
-        <section class="noscript-card">
-          <p class="label">Gunnar Patterson &middot; GUNR</p>
-          <h1>Gunnar <em>Patterson</em></h1>
-          <p>IT Specialist at Moorhead Holdings (formerly Moorhead Brothers). IT infrastructure by day, years of hands-on AI research alongside it.</p>
-          <p>This site is an interactive forward pass and needs JavaScript for the full experience. The essentials:</p>
-          <ul>
-            <li><a href="https://github.com/AIadvancer">GitHub: github.com/AIadvancer</a></li>
-            <li><a href="card.html">Printable card and QR code</a></li>
-          </ul>
-        </section>
+        <p class="p-noscript">You are seeing the plain version of this site. The interactive terminal needs JavaScript — everything important is right here.</p>
       </noscript>
-    </main>
+      <div class="p-bar"><span><b>GUNR</b>//OS · plain view</span></div>
+      <header class="p-head">
+        <p class="p-kicker">GUNR · IT &amp; AI</p>
+        <h1 class="p-name">Gunnar <em>Patterson</em></h1>
+        <p class="p-role">IT Specialist · Moorhead Holdings <span>(formerly Moorhead Brothers)</span></p>
+        <p class="p-tag">Keeping infrastructure up and models learning.</p>
+        <p class="p-meta">Blacksburg, South Carolina · Open to collaborating on applied AI and IT projects</p>
+        <div class="p-actions">
+          <a class="p-btn p-btn--primary" href="mailto:jakepatterson@moorheadbros.com">Email me</a>
+          <a class="p-btn" href="tel:+18647372456">Call</a>
+          <a class="p-btn" href="https://github.com/AIadvancer" rel="me noopener">GitHub</a>
+          <a class="p-btn" href="card.html">Networking card</a>
+        </div>
+      </header>
 
-    <footer class="site-footer" id="site-footer"></footer>
+      <section class="p-sec" aria-labelledby="p-about">
+        <h2 id="p-about">About</h2>
+        <p>I'm Gunnar J. Patterson, an IT Specialist at Moorhead Holdings, the company formerly known as Moorhead Brothers. My day job is the unglamorous work that makes everything else possible: keeping people connected, systems patched, data backed up and the help desk queue moving.</p>
+        <p>Alongside that I've spent years researching AI — reading papers, training and evaluating models, and building practical tools on top of them. I'm most interested in where the two worlds meet: using machine learning to make real IT operations faster, safer and easier to run.</p>
+      </section>
 
-    <!-- Mobile sticky contact dock; rendered by journey.js. -->
-    <nav class="dock" id="dock" aria-label="Quick contact"></nav>
-  </div>
+      <section class="p-sec" aria-labelledby="p-exp">
+        <h2 id="p-exp">Experience</h2>
+        <ol class="p-list">
+          <li class="p-item">
+            <h3>IT Specialist · Moorhead Holdings</h3>
+            <p class="p-item-meta">Present</p>
+            <p>Same mission, new weights: carrying the IT environment through the transition from Moorhead Brothers to Moorhead Holdings.</p>
+          </li>
+          <li class="p-item">
+            <h3>AI Researcher · Indipendent/Student Clemson University</h3>
+            <p class="p-item-meta">2021 – 2026</p>
+            <p>In early 2021, I started using AI to assist with basic tasks and college enrolment tracking however that was just the start to many years of AI application and research</p>
+          </li>
+          <li class="p-item">
+            <h3>IT Specialist · Moorhead Brothers</h3>
+            <p>Supported day-to-day IT across the business — users, devices, network and the systems everyone depends on.</p>
+          </li>
+        </ol>
+      </section>
 
-  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+      <section class="p-sec" aria-labelledby="p-skills">
+        <h2 id="p-skills">Skills</h2>
+        <p>IT infrastructure (Windows Server &amp; Active Directory, Microsoft 365 &amp; Entra ID, networking, endpoint management, backup &amp; recovery, virtualization), AI / ML (Python, PyTorch, LLM fine-tuning, RAG &amp; embeddings, prompting &amp; evals, local GPU inference), security (identity &amp; MFA, patch management, endpoint protection, least privilege, monitoring) and development (PowerShell, JavaScript, Git, REST APIs, SQL).</p>
+      </section>
 
-  <!-- Terminal easter egg toggle; js/terminal.js binds it. -->
-  <button type="button" id="term-toggle" class="term-toggle" aria-label="Open terminal" title="Terminal (`)">&gt;_</button>
+      <section class="p-sec" aria-labelledby="p-contact">
+        <h2 id="p-contact">Contact</h2>
+        <dl class="p-dl">
+          <dt>Email</dt><dd><a href="mailto:jakepatterson@moorheadbros.com">jakepatterson@moorheadbros.com</a></dd>
+          <dt>Phone</dt><dd><a href="tel:+18647372456">+1 864 737 2456</a></dd>
+          <dt>Location</dt><dd>Blacksburg, South Carolina</dd>
+          <dt>GitHub</dt><dd><a href="https://github.com/AIadvancer" rel="me noopener">github.com/AIadvancer</a></dd>
+          <dt>Card</dt><dd><a href="card.html">Printable networking card &amp; QR code</a></dd>
+        </dl>
+      </section>
 
-  <!-- QR library is async so a slow or blocked CDN never delays the page;
-       journey.js fills the QR once gunr:qr-ready fires. -->
-  <script async src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" onload="document.dispatchEvent(new Event('gunr:qr-ready'))" onerror="document.dispatchEvent(new Event('gunr:qr-failed'))"></script>
+      <footer class="p-foot"><span>© Gunnar Patterson · gunr.dev</span></footer>
+    </div>
+  </section>
+
+  <noscript>
+    <!-- Without JavaScript the plain profile above is the whole site. -->
+  </noscript>
+
   <script defer src="js/content.js"></script>
   <script defer src="js/vcard.js"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" onload="document.dispatchEvent(new Event('gunr:qr-ready'))" onerror="document.dispatchEvent(new Event('gunr:qr-failed'))"></script>
   <script defer src="js/qr.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js"></script>
-  <script defer src="js/boot.js"></script>
-  <script defer src="js/journey.js"></script>
-  <script defer src="js/terminal.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>
+  <script defer src="js/os/term.js"></script>
+  <script defer src="js/os/wm.js"></script>
+  <script defer src="js/os/palette.js"></script>
+  <script defer src="js/os/gpt.js"></script>
+  <script defer src="js/os/commands.js"></script>
+  <script defer src="js/os/desktop.js"></script>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
   <script type="module" src="js/scene.js"></script>
 </body>
 </html>

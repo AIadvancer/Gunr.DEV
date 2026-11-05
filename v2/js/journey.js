@@ -434,7 +434,7 @@
     if (!f) return;
     f.innerHTML = '<div class="wrap foot label">' +
       "<span>&copy; " + new Date().getFullYear() + " " + esc(NAME) + "</span>" +
-      '<a class="u-link" href="card.html">Print networking cards</a>' +
+      '<a class="u-link" href="../card.html">Print networking cards</a>' +
       '<span class="foot-term">Press <kbd>`</kbd> for terminal</span>' +
       '<button type="button" class="u-link foot-term-btn" data-term-open>Open terminal</button>' +
       // Phones too narrow for the top-bar switch get it here (CSS decides which shows).
