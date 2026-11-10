@@ -490,7 +490,7 @@
     liveLinks().forEach(function (l) {
       file(ld, U.slug(l.label) + ".url", "url", { href: l.url, body: function () { return "[InternetShortcut]\nURL=" + l.url; } });
     });
-    file(rootDir, "card.html", "html", { href: "card.html", body: function () {
+    file(rootDir, "card.html", "html", { href: "../card.html", body: function () {
       return "<!-- card.html — printable networking cards with a QR code -->\n<!-- run `open card.html` or `print` to open it -->";
     } });
     return rootDir;
@@ -1481,7 +1481,7 @@
         if (saveVcard()) { b.classList.add("is-done"); setTimeout(function () { b.classList.remove("is-done"); }, 1800); }
       } }),
       btn("Share", { icon: "share", onclick: function () { shareSite(function (r) { if (r === "copied") toast("Link copied", "ok"); }); } }),
-      h("a", { "class": "x-btn", href: "card.html", target: "_blank", rel: "noopener" }, [iconEl("printer"), h("span", null, "Print networking cards")])
+      h("a", { "class": "x-btn", href: "../card.html", target: "_blank", rel: "noopener" }, [iconEl("printer"), h("span", null, "Print networking cards")])
     ]);
     var qr = h("figure", { "class": "cc-qr" }, [qrBox(siteUrl()), h("figcaption", null, ["Scan to open ", h("b", null, host(siteUrl()))])]);
     add(app, [card, h("div", { "class": "cc-side" }, [actions, qr])]);
@@ -2014,8 +2014,8 @@
     details: "Opens card.html — business cards with a QR code, ready to print.",
     run: function (ctx) {
       var w = null;
-      try { w = window.open("card.html", "_blank", "noopener"); } catch (e) { w = null; }
-      ctx.out.line(["→ opening ", { text: "card.html", href: "card.html" }, " (printable cards)"]);
+      try { w = window.open("../card.html", "_blank", "noopener"); } catch (e) { w = null; }
+      ctx.out.line(["→ opening ", { text: "card.html", href: "../card.html" }, " (printable cards)"]);
       if (!w) ctx.out.hint("If nothing opened, tap the link above.");
       chips(ctx, ["qr", "vcard", "contact"]);
     }

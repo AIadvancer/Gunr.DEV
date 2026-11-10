@@ -1,13 +1,12 @@
 {
-  "name": "GUNR//OS · Gunnar Patterson",
-  "short_name": "GUNR//OS",
-  "description": "A terminal you can tap: Gunnar Patterson, IT Specialist and AI researcher. Save the contact, browse research and experience, or ask gunr-gpt.",
+  "name": "Gunnar Patterson · GUNR.DEV",
+  "short_name": "GUNR.DEV",
+  "description": "Gunnar Patterson, IT Specialist and AI researcher. A page learned live by a small neural network in your browser. Save the contact in one tap.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0B0B0C",
-  "theme_color": "#0B0B0C",
+  "background_color": "#0c0c0e",
+  "theme_color": "#0c0c0e",
   "icons": [
     {
       "src": "favicon.svg",

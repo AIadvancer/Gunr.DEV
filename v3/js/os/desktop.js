@@ -744,7 +744,7 @@
     links.forEach(function (l) {
       H.push("<dt>" + esc(l.label) + '</dt><dd><a href="' + esc(l.url) + '" rel="me noopener">' + esc(String(l.url).replace(/^https?:\/\/(www\.)?/, "")) + "</a></dd>");
     });
-    H.push('<dt>Card</dt><dd><a href="card.html">Printable networking card &amp; QR code</a></dd>');
+    H.push('<dt>Card</dt><dd><a href="../card.html">Printable networking card &amp; QR code</a></dd>');
     H.push("</dl></section>");
 
     H.push('<footer class="p-foot"><span>© ' + new Date().getFullYear() + " " + esc(fullName()) + " · " + esc(host) + "</span>" +
