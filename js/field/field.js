@@ -25,6 +25,7 @@
   var FRAG = [
     "#version 300 es",
     "precision highp float;",
+    "precision highp sampler2D;",
     "uniform sampler2D uA,uB;",
     "uniform vec2 uRes,uSize,uPointer,uCenter;",
     "uniform float uMix,uTime,uHeat,uZoom,uDpr,uPointerAmp,uDrift;",
@@ -151,6 +152,7 @@
     var raster = null, seed = (Math.random() * 4294967295) >>> 0;
 
     var worker = new Worker(opts.workerUrl || "js/field/worker.js");
+    worker.onerror = function () { lost = true; if (opts.onFail) opts.onFail(); };
     worker.onmessage = function (ev) {
       var m = ev.data;
       if (m.type === "ready") {
@@ -258,7 +260,12 @@
       if (theme && themeT && !lerpTheme(Math.min(1, dt * 7))) settled = false;
       var mix = Math.min(1, (now - mixStart) / mixDur);
       if (mix < 1) settled = false;
-      if (!have || !theme) return settled;
+      if (!theme) return settled;
+      if (!have) {                                   // nothing learned yet: paint the page colour, not black
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(theme.bg[0], theme.bg[1], theme.bg[2], 1); gl.clear(gl.COLOR_BUFFER_BIT);
+        return settled;
+      }
 
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texA);
@@ -295,7 +302,7 @@
     /* ---- events ------------------------------------------------------------ */
     function onPointer(e) {
       var r = canvas.getBoundingClientRect();
-      if (r.width < 2) return;
+      if (r.width < 2 || !motion) return;          // the pointer hill is motion
       ptr.tu = (e.clientX - r.left) / r.width; ptr.tv = (e.clientY - r.top) / r.height;
       if (ptr.amp < 0.02 && !ptr.tamp) { ptr.u = ptr.tu; ptr.v = ptr.tv; }
       ptr.tamp = 1; ptr.at = performance.now();
@@ -307,7 +314,11 @@
       worker.postMessage({ type: document.hidden || !visible ? "pause" : "resume" });
       lastT = 0; request();
     });
-    canvas.addEventListener("webglcontextlost", function (e) { e.preventDefault(); lost = true; }, false);
+    canvas.addEventListener("webglcontextlost", function (e) {
+      e.preventDefault(); lost = true;
+      worker.postMessage({ type: "pause" });
+      if (opts.onFail) opts.onFail();
+    }, false);
     canvas.addEventListener("webglcontextrestored", function () { location.reload(); }, false);
 
     /* ---- API --------------------------------------------------------------- */

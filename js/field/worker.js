@@ -291,6 +291,8 @@ function setMask(m) {
   target = t;
   edge = ed.length ? new Int32Array(ed) : null;
   since = 0; lossRef = 1; state = "training";
+  // Reduced motion: show the finished terrain at once; the network catches up quietly.
+  if (C.instant) post(target);
   kick();
 }
 
@@ -308,7 +310,7 @@ function perturb(amount) {
 /* ---- loop -------------------------------------------------------------------- */
 // Two channels per texel: the raw output (crisp glyph shoreline) and a softly
 // blurred copy (silky contour lines on the open terrain).
-var rawF = null, tmpF = null;
+var rawF = null, tmpF = null, smF = null;
 function blurPass(src, dst, w, h, horiz) {         // binomial 1 4 6 4 1
   var x, y, i, a, b, c, d, e;
   if (horiz) {
@@ -327,11 +329,12 @@ function blurPass(src, dst, w, h, horiz) {         // binomial 1 4 6 4 1
     }
   }
 }
-function post() {
+function post(src) {
   var n = tw * th, i;
-  if (!rawF || rawF.length !== n) { rawF = new Float32Array(n); tmpF = new Float32Array(n); }
-  var buf = new Float32Array(n * 2), sm = new Float32Array(n);
-  evalField(tmpF); soften(tmpF, rawF, tw, th);
+  if (!rawF || rawF.length !== n) { rawF = new Float32Array(n); tmpF = new Float32Array(n); smF = new Float32Array(n); }
+  var buf = new Float32Array(n * 2), sm = smF;
+  if (src) tmpF.set(src); else evalField(tmpF);
+  soften(tmpF, rawF, tw, th);
   blurPass(rawF, tmpF, tw, th, true); blurPass(tmpF, sm, tw, th, false);
   blurPass(sm, tmpF, tw, th, true); blurPass(tmpF, sm, tw, th, false);
   for (i = 0; i < n; i++) { buf[i * 2] = rawF[i]; buf[i * 2 + 1] = sm[i]; }

@@ -23,7 +23,7 @@
     :root[data-theme="paper"] { --bg: #f1ede4; --fg: #131316; --fg-2: #55514a; --line: rgba(19, 19, 22, .18); }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
-    body { margin: 0; background: var(--bg); color: var(--fg); font: 400 1rem/1.5 "JetBrains Mono", ui-monospace, Consolas, monospace; display: grid; place-items: center; overflow: hidden; }
+    body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); font: 400 1rem/1.5 "JetBrains Mono", ui-monospace, Consolas, monospace; display: grid; place-items: center; overflow-x: hidden; padding: 2rem 0; }
     svg.map { position: fixed; inset: -10%; width: 120%; height: 120%; z-index: 0; }
     svg.map path { fill: none; stroke: var(--line); stroke-width: 1.2; }
     svg.map path:nth-child(4n) { stroke-width: 2; }

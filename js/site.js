@@ -107,7 +107,8 @@
     },
     qr: function (b) { toggleQr(b); },
     motion: function () {
-      try { localStorage.setItem("gunr.motion", MOTION ? "reduced" : "full"); } catch (e) {}
+      try { localStorage.setItem("gunr.motion", MOTION ? "reduced" : "full"); }
+      catch (e) { location.replace(location.pathname + "?motion=" + (MOTION ? "reduced" : "full")); return; }
       location.replace(location.pathname + location.hash);
     }
   };
@@ -156,7 +157,7 @@
     if (groups.length) rows.push(["Focus", esc(groups.join(" · "))]);
     if (isSet(P.handle)) rows.push(["Handle", esc(P.handle)]);
     var h = "";
-    if (lead) h += '<p class="lead" data-scrub style="--n:' + n + '" aria-label="' + esc(lead) + '"><span aria-hidden="true">' + words(lead, true) + "</span></p>";
+    if (lead) h += '<p class="lead" data-scrub style="--n:' + n + '" ><span class="sr">' + esc(lead) + '</span><span aria-hidden="true">' + words(lead, true) + "</span></p>";
     h += '<div class="about-grid">';
     h += '<div class="about-text" data-reveal>' + bio.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + "</div>";
     h += '<aside class="spec" data-reveal style="--d:1" aria-label="Spec sheet"><div class="spec-head"><span class="label">Spec sheet</span><span class="label">rev. ' + new Date().getFullYear() + "</span></div>";
@@ -197,8 +198,8 @@
     var h = '<div class="trail" data-scrub data-trail><div class="trail-plot">';
     h += '<svg viewBox="0 0 ' + W + " " + Hh + '" preserveAspectRatio="none" aria-hidden="true"><defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="var(--line-2)" stroke-width="1"/></pattern></defs>';
     h += '<g class="trail-grid">' + grid.map(function (g) { return '<line x1="0" x2="' + W + '" y1="' + g.y + '" y2="' + g.y + '"/>'; }).join("") + "</g>";
-    h += '<path class="trail-area" d="' + d + " L" + W + "," + Hh + " L0," + Hh + ' Z"/>';
-    h += '<path class="trail-line" pathLength="1" d="' + d + '"/></svg>';
+    h += '<path class="trail-area" fill="url(#hatch)" d="' + d + " L" + W + "," + Hh + " L0," + Hh + ' Z"/>';
+    h += '<path class="trail-line" d="' + d + '"/></svg>';
     h += grid.map(function (g) { return '<span class="trail-y" style="top:' + (g.y / Hh * 100) + '%">' + num(g.g, 2) + "</span>"; }).join("");
     h += pts.map(function (p, i) { return '<span class="way" data-way="' + i + '" style="left:' + (p.x / W * 100) + "%;top:" + (p.y / Hh * 100) + '%">' + (i < 9 ? "0" : "") + (i + 1) + "</span>"; }).join("");
     h += '<span class="hiker" aria-hidden="true"></span></div>';
@@ -225,6 +226,7 @@
     if (!trail || Math.abs(p - trail.p) < 0.002) return;
     trail.p = p;
     var q = trail.path.getPointAtLength(trail.len * p);
+    trail.el.style.setProperty("--hx", (q.x / trail.W).toFixed(4));
     trail.hiker.style.left = (q.x / trail.W * 100) + "%"; trail.hiker.style.top = (q.y / trail.H * 100) + "%";
     trail.at.forEach(function (a, i) {
       var on = p >= a - 0.01;
@@ -236,7 +238,7 @@
   function ridge(level) {
     var W = 200, Hh = 28, c = clamp(level, 0.06, 0.94) * W, A = 5 + 17 * level, sg = 10, d = "";
     for (var x = 0; x <= W; x += 4) { var y = Hh - 3 - A * Math.exp(-(x - c) * (x - c) / (2 * sg * sg)); d += (x ? " L" : "M") + x + "," + y.toFixed(2); }
-    return '<svg class="ridge" viewBox="0 0 ' + W + " " + Hh + '" preserveAspectRatio="none" aria-hidden="true"><line x1="50" x2="50" y1="4" y2="' + Hh + '"/><line x1="100" x2="100" y1="4" y2="' + Hh + '"/><line x1="150" x2="150" y1="4" y2="' + Hh + '"/><path pathLength="1" d="' + d + '"/></svg>';
+    return '<svg class="ridge" viewBox="0 0 ' + W + " " + Hh + '" preserveAspectRatio="none" aria-hidden="true"><line x1="50" x2="50" y1="4" y2="' + Hh + '"/><line x1="100" x2="100" y1="4" y2="' + Hh + '"/><line x1="150" x2="150" y1="4" y2="' + Hh + '"/><path d="' + d + '"/></svg>';
   }
   function renderSkills() {
     var groups = arr(P.skills).map(function (g) {
@@ -328,8 +330,7 @@
     if (!w || w.getAttribute("data-field") === "hero") {
       // The name fills the free band between the kicker line and the hero footer.
       var H = Math.max(1, $("#field").clientHeight), k = $("#hero-kicker"), f = $(".hero-foot");
-      var a = k.offsetTop + k.offsetHeight + H * 0.035, b = f.offsetTop - H * 0.045;
-      if (!(b - a > H * 0.18)) { a = H * 0.16; b = H * 0.58; }
+      var a = k.offsetTop + k.offsetHeight + H * 0.035, b = Math.max(f.offsetTop - H * 0.045, a + 40);
       return { lines: heroLines(), lay: { cy: (a + b) / 2 / H, fitW: portrait ? 0.88 : 0.8, fitH: (b - a) / H, maxCap: portrait ? 0.3 : 0.46, gap: 0.18 } };
     }
     return { lines: [w.getAttribute("data-field")], lay: portrait ? { cy: 0.46, fitW: 0.82, maxCap: 0.3 } : { cy: 0.47, fitW: 0.62, maxCap: 0.46 } };
@@ -343,6 +344,7 @@
     var c = hud.spark; if (!c || !c.getContext || !hist.length) return;
     var g = c.getContext("2d"), W = c.width, Hh = c.height, i;
     g.clearRect(0, 0, W, Hh);
+    if (c.offsetParent === null) return;              // hidden on phones
     var cs = getComputedStyle(root), lo = -4.6, hi = -0.6;
     g.strokeStyle = cs.getPropertyValue("--line-2").trim() || "#888"; g.lineWidth = 1; g.setLineDash([3, 5]);
     g.beginPath(); g.moveTo(0, Hh - 1); g.lineTo(W, Hh - 1); g.stroke(); g.setLineDash([]);
@@ -355,6 +357,7 @@
     g.stroke();
   }
   function onStats(s) {
+    if (!firstFrame) { firstFrame = true; root.classList.add("has-field"); }
     var training = s.state === "training";
     if (s.state !== lastState) {
       lastState = s.state;
@@ -369,17 +372,21 @@
     var txt = "loss " + (s.loss < 0.0001 ? s.loss.toExponential(1) : s.loss.toFixed(4));
     for (var i = 0; i < liveEls.length; i++) liveEls[i].textContent = txt;
   }
+  var firstFrame = false;
+  // No WebGL2 / Worker, a crashed worker, a lost context or no frame in time: show the plain headline.
+  function fieldFailed() { root.classList.remove("has-field"); root.classList.add("no-field"); if (field) field.setVisible(false); }
   function startField() {
     var canvas = $("#field");
     field = window.GUNR_FIELD ? GUNR_FIELD.create(canvas, {
-      motion: MOTION, coarse: small(), onStats: onStats,
+      motion: MOTION, coarse: small(), onStats: onStats, onFail: fieldFailed,
       onReady: function (m) {
         hud.params.textContent = m.params.toLocaleString("en-US");
         var fp = $("#foot-params"); if (fp) fp.textContent = m.params.toLocaleString("en-US") + "-weight";
       }
     }) : null;
-    if (!field) { root.classList.add("no-field"); return; }
-    root.classList.add("has-field");
+    if (!field) { fieldFailed(); return; }
+    // the real <h1> stays visible until the first frame arrives (or for good if none does)
+    setTimeout(function () { if (!firstFrame) fieldFailed(); }, 6000);
     field.setTheme(fieldTheme(), true);
     activeWin = wins[0] || null;
     applyTarget();
@@ -516,10 +523,12 @@
     });
     window.addEventListener("scroll", onScroll, { passive: true });
     // Phones fire resize whenever the URL bar slides; only a width change re-lays the words.
-    var lastW = window.innerWidth;
+    var lastW = window.innerWidth, lastH = $("#field").clientHeight;
     window.addEventListener("resize", function () {
       onScroll();
-      if (window.innerWidth === lastW) return;
+      var chNow = $("#field").clientHeight;
+      if (window.innerWidth === lastW && chNow === lastH) return;
+      lastH = chNow;
       lastW = window.innerWidth;
       clearTimeout(pendT); pendT = setTimeout(applyTarget, 300);
     });
@@ -528,8 +537,18 @@
     bindHud();
 
     // Start the field once the display face is ready (the glyphs are drawn with it).
-    var started = false, go = function () { if (started) return; started = true; startField(); root.classList.add("is-in"); hero.classList.add("is-in"); };
-    if (doc.fonts && doc.fonts.load) { doc.fonts.load('400 64px "Anton"').then(go, go); setTimeout(go, 1800); } else go();
+    var started = false, hadFont = false;
+    var go = function () {
+      if (started) return;
+      started = true;
+      hadFont = !!(doc.fonts && doc.fonts.check && doc.fonts.check('400 64px "Anton"'));
+      startField(); root.classList.add("is-in"); hero.classList.add("is-in");
+    };
+    if (doc.fonts && doc.fonts.load) {
+      // If the face only lands after the timeout, re-draw the words with it.
+      doc.fonts.load('400 64px "Anton"').then(function () { if (started && !hadFont) { hadFont = true; applyTarget(); } go(); }, go);
+      setTimeout(go, 1800);
+    } else go();
 
     window.GUNR_SITE_READY = true;
     update();

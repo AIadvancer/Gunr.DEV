@@ -19,14 +19,14 @@
 }
 :root, :root[data-theme="ink"] {
   --bg: #0c0c0e; --bg-2: #131316; --bg-3: #1b1b1f;
-  --fg: #efebe3; --fg-2: #aaa59c; --fg-3: #77736b;
+  --fg: #efebe3; --fg-2: #aaa59c; --fg-3: #85817a;
   --line: rgba(239, 235, 227, .14); --line-2: rgba(239, 235, 227, .28);
   --accent-text: #ff7a45;
   color-scheme: dark;
 }
 :root[data-theme="paper"] {
   --bg: #f1ede4; --bg-2: #e9e4d8; --bg-3: #dfd9cb;
-  --fg: #131316; --fg-2: #55514a; --fg-3: #7d786f;
+  --fg: #131316; --fg-2: #55514a; --fg-3: #68635b;
   --line: rgba(19, 19, 22, .15); --line-2: rgba(19, 19, 22, .32);
   --accent-text: #b63a08;
   color-scheme: light;
@@ -48,9 +48,10 @@ button, input { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: 0; padding: 0; }
 svg { display: block; }
 ::selection { background: var(--accent); color: var(--on-accent); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 3px; border-radius: 4px; }
+[tabindex="-1"]:focus { outline: none; }
 
-.sr, .has-field .hero-name {
+.sr, .js:not(.no-field) .hero-name {
   position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
   clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
 }
@@ -260,10 +261,9 @@ main { position: relative; z-index: 1; }
 .trail-plot { position: relative; height: clamp(11rem, 26vw, 19rem); border-bottom: 1px solid var(--line-2); }
 .trail-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .trail-grid line { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 2 5; }
-.trail-area { fill: url(#hatch); opacity: .9; }
+.trail-area { opacity: .9; }
 .trail-line { fill: none; stroke: var(--accent); stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
-.motion .trail-line { stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p, 1)); }
-.motion .trail-area { clip-path: inset(0 calc((1 - var(--p, 1)) * 100%) 0 0); }
+.motion .trail-line, .motion .trail-area { clip-path: inset(-8px calc((1 - var(--hx, 1)) * 100%) -8px 0); }
 .trail-y { position: absolute; left: 0; transform: translateY(-50%); font: 400 .64rem/1 var(--mono); color: var(--fg-3); background: var(--bg); padding-right: .4rem; }
 .trail-cap { display: flex; justify-content: space-between; gap: 1rem; margin-top: .7rem; }
 .way {
@@ -309,9 +309,9 @@ main { position: relative; z-index: 1; }
 .skill-val { font: 500 .78rem/1 var(--mono); text-align: right; color: var(--fg-2); font-variant-numeric: tabular-nums; }
 .ridge { width: 100%; height: 1.75rem; overflow: visible; }
 .ridge path { fill: none; stroke: var(--fg-2); stroke-width: 1.4; vector-effect: non-scaling-stroke; stroke-linejoin: round;
-  stroke-dasharray: 1; stroke-dashoffset: 0; transition: stroke-dashoffset 1.3s var(--ease) calc(var(--d, 0) * 60ms + .15s), stroke .25s; }
+  clip-path: inset(-6px 0 -6px 0); transition: clip-path 1.3s var(--ease) calc(var(--d, 0) * 60ms + .15s), stroke .25s; }
 .ridge line { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.js [data-reveal]:not(.in) .ridge path { stroke-dashoffset: 1; }
+.motion [data-reveal]:not(.in) .ridge path { clip-path: inset(-6px 100% -6px 0); }
 .skill-btn[aria-expanded="true"] { background: color-mix(in srgb, var(--fg) 5%, transparent); }
 .skill-btn[aria-expanded="true"] .ridge path, .skill-btn:hover .ridge path { stroke: var(--accent); }
 .skill-btn[aria-expanded="true"] .skill-val { color: var(--accent-text); }
@@ -391,7 +391,7 @@ a.row-v:hover { color: var(--accent-text); }
 .no-motion .sec-title { clip-path: none !important; transform: none !important; }
 
 /* hero entrance */
-.js .hero-kicker, .js .hero-copy, .js .hud, .js .cue, .js .top { opacity: 0; transition: opacity 1s var(--ease), transform 1.2s var(--ease); }
+.js .hero-kicker, .js .hero-copy, .js .hud, .js .cue, .js .top { opacity: 0; transition: opacity 1s var(--ease), transform 1.2s var(--ease), background .4s, border-color .4s; }
 .js .hero-copy, .js .hud { transform: translateY(18px); }
 .js .is-in .hero-kicker, .js .is-in .hero-copy, .js .is-in .hud, .js .is-in .cue, .js.is-in .top,
 .reveal-all .hero-kicker, .reveal-all .hero-copy, .reveal-all .hud, .reveal-all .top { opacity: 1; transform: none; }
@@ -457,3 +457,27 @@ a.row-v:hover { color: var(--accent-text); }
   .hero .actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .hero .actions .btn { padding: 0 .4rem; gap: .4rem; font-size: .88rem; }
 }
+
+/* ---- review fixes ---------------------------------------------------------- */
+/* the name always gets its own band above the hero footer, so they can never overlap */
+.hero-foot { margin-top: clamp(9rem, 30svh, 22rem); }
+@media (max-height: 620px) { .hud-ctl { display: none; } }
+/* collapsed panels and the parked dock are out of the accessibility tree and tab order */
+.skill:not(.open) .skill-note, .qr:not(.open) > div, .dock:not(.is-on) { visibility: hidden; transition-property: grid-template-rows, transform, visibility; }
+.skill-note, .qr > div, .dock { transition: visibility 0s; }
+.skill:not(.open) .skill-note, .qr:not(.open) > div { transition: visibility 0s .5s; }
+.dock { transition: transform .6s var(--ease), visibility 0s; }
+.dock:not(.is-on) { transition: transform .6s var(--ease), visibility 0s .6s; }
+.skill-note { transition: grid-template-rows .45s var(--ease), visibility 0s; }
+.skill:not(.open) .skill-note { transition: grid-template-rows .45s var(--ease), visibility 0s .45s; }
+/* touch: comfortable targets, and no iOS zoom on the text field */
+@media (pointer: coarse) {
+  .icon-btn { width: 2.75rem; height: 2.75rem; }
+  .chip, .teach input, .teach .chip, .top .btn--sm, .row .chip { min-height: 2.75rem; }
+  .teach input { font-size: 16px; letter-spacing: 0; }
+  .mark, .link-btn, .foot-row a { min-height: 2.75rem; display: inline-flex; align-items: center; }
+}
+:root { --gut: max(clamp(1.15rem, 4vw, 3.5rem), env(safe-area-inset-left), env(safe-area-inset-right)); }
+/* reduced motion: no decorative movement at all */
+.no-motion .icon-btn:hover { transform: none; }
+.no-motion .scale i, .no-motion .ridge path, .no-motion .dock { transition-duration: .001s !important; transition-delay: 0s !important; }
