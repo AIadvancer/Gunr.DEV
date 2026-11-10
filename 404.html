@@ -1,187 +1,66 @@
 <!doctype html>
-<html lang="en" data-theme="gunr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>404 · No such file · GUNR//OS</title>
-  <meta name="description" content="This path does not exist on GUNR//OS. Head back to the terminal.">
+  <title>Off the map — GUNR.DEV</title>
   <meta name="robots" content="noindex">
-  <meta name="theme-color" content="#0B0B0C">
-  <meta name="color-scheme" content="dark">
-  <!-- Self-contained on purpose: GitHub Pages serves this file at any missing
-       path (e.g. /a/b/c), where relative links to css/ or js/ would break. -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B0B0C'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23FF5A1F'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#0c0c0e">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&amp;display=swap">
-  <style>
-    /* gunr is the brand palette; the others are a minimal subset of the
-       GUNR//OS themes so a visitor's saved theme (gos.theme) carries over. */
-    :root {
-      --bg: #0B0B0C; --surface: #141416; --line: rgba(237, 234, 228, .12);
-      --fg: #EDEAE4; --fg-dim: #9A968F; --accent: #FF5A1F; --accent-2: #8AB0F8;
-      --c-red: #FF6B5E; --c-green: #A8D672; --c-yellow: #F2C46D;
-      --f-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      --ease: cubic-bezier(.16, 1, .3, 1);
-      color-scheme: dark;
-    }
-    html[data-theme="tokyo-night"] { --bg: #1A1B26; --surface: #1F2335; --fg: #C0CAF5; --fg-dim: #9AA5CE; --accent: #7AA2F7; --accent-2: #BB9AF7; --c-red: #F7768E; --c-green: #9ECE6A; --c-yellow: #E0AF68; --line: rgba(192, 202, 245, .12); }
-    html[data-theme="catppuccin"]  { --bg: #1E1E2E; --surface: #181825; --fg: #CDD6F4; --fg-dim: #A6ADC8; --accent: #CBA6F7; --accent-2: #89B4FA; --c-red: #F38BA8; --c-green: #A6E3A1; --c-yellow: #F9E2AF; --line: rgba(205, 214, 244, .12); }
-    html[data-theme="gruvbox"]     { --bg: #282828; --surface: #1D2021; --fg: #EBDBB2; --fg-dim: #BDAE93; --accent: #FE8019; --accent-2: #83A598; --c-red: #FB4934; --c-green: #B8BB26; --c-yellow: #FABD2F; --line: rgba(235, 219, 178, .12); }
-    html[data-theme="nord"]        { --bg: #2E3440; --surface: #3B4252; --fg: #ECEFF4; --fg-dim: #D8DEE9; --accent: #88C0D0; --accent-2: #81A1C1; --c-red: #E07A84; --c-green: #A3BE8C; --c-yellow: #EBCB8B; --line: rgba(236, 239, 244, .14); }
-    html[data-theme="rose-pine"]   { --bg: #191724; --surface: #1F1D2E; --fg: #E0DEF4; --fg-dim: #908CAA; --accent: #EBBCBA; --accent-2: #9CCFD8; --c-red: #EB6F92; --c-green: #9CCFD8; --c-yellow: #F6C177; --line: rgba(224, 222, 244, .12); }
-    html[data-theme="matrix"]      { --bg: #000000; --surface: #050A06; --fg: #B8FFC8; --fg-dim: #5FD47E; --accent: #00FF66; --accent-2: #7CFFB0; --c-red: #FF6B6B; --c-green: #00FF66; --c-yellow: #D4FF5C; --line: rgba(0, 255, 102, .16); }
-
-    *, *::before, *::after { box-sizing: border-box; }
-    html { background: var(--bg); }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      min-height: 100svh;
-      display: grid;
-      place-items: center;
-      padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
-      background:
-        radial-gradient(60% 50% at 70% 20%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%),
-        radial-gradient(50% 40% at 15% 90%, color-mix(in srgb, var(--accent-2) 7%, transparent), transparent 70%),
-        var(--bg);
-      color: var(--fg);
-      font: 400 14.5px/1.65 var(--f-mono);
-      font-variant-ligatures: contextual;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: clip;
-    }
-
-    .win {
-      width: min(680px, 100%);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: color-mix(in srgb, var(--surface) 88%, transparent);
-      box-shadow: 0 1px 0 rgba(255, 255, 255, .04) inset, 0 30px 80px -20px rgba(0, 0, 0, .7), 0 0 0 1px rgba(0, 0, 0, .4);
-      overflow: hidden;
-    }
-    .motion-full .win { animation: pop .7s var(--ease) both; }
-    @keyframes pop { from { opacity: 0; transform: translateY(14px) scale(.97); } }
-
-    .bar {
-      display: flex; align-items: center; gap: 10px;
-      height: 34px; padding: 0 14px;
-      border-bottom: 1px solid var(--line);
-      font-size: 12.5px; color: var(--fg-dim);
-    }
-    .bar .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-    .bar .t { color: var(--fg); }
-    .bar .p { margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    .body { padding: 18px 18px 22px; }
-    .prompt { display: flex; flex-wrap: wrap; align-items: center; gap: 0; margin: 0 0 4px; font-size: 12.5px; }
-    .seg {
-      position: relative; padding: 2px 14px 2px 12px; margin-right: -4px;
-      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%, 8px 50%);
-      background: color-mix(in srgb, var(--fg) 10%, var(--surface)); color: var(--fg);
-    }
-    .seg:first-child { clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%); border-radius: 6px 0 0 6px; background: var(--accent); color: var(--bg); font-weight: 700; }
-    .seg.err { background: color-mix(in srgb, var(--c-red) 22%, var(--surface)); color: var(--fg); }
-    .line { margin: 0; overflow-wrap: anywhere; }
-    .chev { color: var(--c-red); font-weight: 700; }
-    .cmd { color: var(--c-green); }
-    h1 { margin: 10px 0 16px; font: inherit; font-weight: 500; overflow-wrap: anywhere; }
-    h1 .tag { color: var(--c-red); }
-    h1 code { font: inherit; color: var(--c-yellow); }
-    .hint { margin: 0 0 10px; color: var(--fg-dim); }
-
-    ul { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 6px; }
-    a.go {
-      display: flex; align-items: center; gap: 12px;
-      min-height: 44px; padding: 8px 12px;
-      border: 1px solid var(--line); border-radius: 8px;
-      color: var(--fg); text-decoration: none;
-      transition: border-color .3s var(--ease), background-color .3s var(--ease), transform .3s var(--ease);
-    }
-    a.go .k { color: var(--accent-2); min-width: 7ch; }
-    a.go .d { color: var(--fg-dim); }
-    a.go .a { margin-left: auto; color: var(--accent); opacity: 0; transition: opacity .3s, transform .3s var(--ease); }
-    a.go:hover, a.go:focus-visible { border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-    a.go:hover .a, a.go:focus-visible .a { opacity: 1; transform: translateX(2px); }
-    .motion-full a.go:hover { transform: translateX(3px); }
-    a.go.primary { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
-    a.go.primary .k { color: var(--accent); font-weight: 700; }
-    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-
-    .caret-line { margin: 0; color: var(--accent); }
-    .caret { display: inline-block; width: .6em; height: 1.15em; vertical-align: -.2em; margin-left: 2px; background: var(--accent); border-radius: 1px; }
-    .motion-full .caret { animation: blink 1.1s ease-in-out infinite; }
-    @keyframes blink { 50% { opacity: .15; } }
-
-    @media (max-width: 480px) {
-      body { font-size: 14px; }
-      .bar .p { display: none; }
-      a.go { flex-wrap: wrap; row-gap: 0; }
-      a.go .d { flex-basis: 100%; font-size: 12.5px; }
-      a.go .a { display: none; }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script>
     (function () {
-      var root = document.documentElement;
-      function get(s, k) { try { return window[s].getItem(k); } catch (e) { return null; } }
-      // Same motion contract as GUNR//OS: ?motion= wins, then the saved choice, then the OS.
-      var q = (/[?&]motion=(full|reduced)\b/.exec(location.search) || [])[1];
-      var saved = get("localStorage", "gunr.motion");
-      var full = q ? q === "full"
-        : (saved === "full" || saved === "reduced") ? saved === "full"
-        : !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
-      root.classList.add(full ? "motion-full" : "motion-reduced");
-      var themes = ["gunr", "tokyo-night", "catppuccin", "gruvbox", "nord", "rose-pine", "matrix"];
-      var t = get("localStorage", "gos.theme");
-      if (themes.indexOf(t) >= 0) root.setAttribute("data-theme", t);
+      var t = null;
+      try { t = localStorage.getItem("gunr.theme"); } catch (e) {}
+      if (t !== "ink" && t !== "paper") t = window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches ? "paper" : "ink";
+      document.documentElement.dataset.theme = t;
     })();
   </script>
+  <style>
+    :root { --bg: #0c0c0e; --fg: #efebe3; --fg-2: #aaa59c; --line: rgba(239, 235, 227, .16); --accent: #ff5a1f; }
+    :root[data-theme="paper"] { --bg: #f1ede4; --fg: #131316; --fg-2: #55514a; --line: rgba(19, 19, 22, .18); }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 400 1rem/1.5 "JetBrains Mono", ui-monospace, Consolas, monospace; display: grid; place-items: center; overflow: hidden; }
+    svg.map { position: fixed; inset: -10%; width: 120%; height: 120%; z-index: 0; }
+    svg.map path { fill: none; stroke: var(--line); stroke-width: 1.2; }
+    svg.map path:nth-child(4n) { stroke-width: 2; }
+    main { position: relative; z-index: 1; width: min(100% - 2.5rem, 40rem); text-align: center; }
+    .k { font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: var(--fg-2); }
+    h1 { margin: .4rem 0 0; font: 400 clamp(7rem, 34vw, 16rem)/.82 Anton, Impact, sans-serif; letter-spacing: .01em; }
+    h1 span { color: var(--accent); }
+    p.s { margin: .9rem auto 1.6rem; font: italic 400 clamp(1.4rem, 4.2vw, 2rem)/1.15 "Instrument Serif", Georgia, serif; max-width: 22ch; }
+    code { display: block; margin: 0 auto 1.6rem; padding: .6rem .9rem; border: 1px dashed var(--line); border-radius: 999px; font-size: .78rem; color: var(--fg-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+    nav { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
+    a { display: inline-flex; align-items: center; min-height: 3rem; padding: 0 1.3rem; border-radius: 999px; border: 1px solid var(--line); color: inherit; text-decoration: none; font: 600 .95rem/1 system-ui, sans-serif; }
+    a.p { background: var(--accent); border-color: var(--accent); color: #0c0c0e; }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  </style>
 </head>
 <body>
-  <main class="win" aria-labelledby="err">
-    <div class="bar" aria-hidden="true">
-      <span class="dot"></span><span class="t">gsh</span><span>GUNR//OS</span>
-      <span class="p" id="bar-path">~</span>
-    </div>
-    <div class="body">
-      <div class="prompt" aria-hidden="true">
-        <span class="seg">guest@gunr</span><span class="seg" id="seg-path">~</span><span class="seg err">&#x2717; 404</span>
-      </div>
-      <p class="line" aria-hidden="true"><span class="chev">&#x276F;</span> <span class="cmd">cd</span> <span id="cmd-path">/</span></p>
-      <h1 id="err"><span class="tag">gsh:</span> no such file or directory: <code id="path">/</code></h1>
-      <p class="hint">This page doesn't exist (error 404). Pick a way back:</p>
-      <ul>
-        <li><a class="go primary" id="home" href="/"><span class="k">home</span><span class="d">Back to the GUNR//OS terminal</span><span class="a" aria-hidden="true">&#x2192;</span></a></li>
-        <li><a class="go" id="card" href="/card.html"><span class="k">card</span><span class="d">Printable networking card and QR code</span><span class="a" aria-hidden="true">&#x2192;</span></a></li>
-        <li><a class="go" id="v2" href="/v2/"><span class="k">v2</span><span class="d">The previous design, Forward Pass (archive)</span><span class="a" aria-hidden="true">&#x2192;</span></a></li>
-      </ul>
-      <p class="caret-line" aria-hidden="true">&#x276F;<span class="caret"></span></p>
-    </div>
+  <svg class="map" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path d="M300 250c40 0 70 22 70 52s-30 50-70 50-72-20-72-50 32-52 72-52z"/>
+    <path d="M300 215c64 0 112 36 112 86s-48 84-112 84-116-34-116-84 52-86 116-86z"/>
+    <path d="M298 178c88-4 158 50 158 122s-70 122-158 122-160-50-160-122 72-118 160-122z"/>
+    <path d="M296 138c116-8 206 66 206 162s-90 164-206 164S88 396 88 300s92-154 208-162z"/>
+    <path d="M292 96c146-12 258 84 258 204S438 506 292 506 36 420 36 300 146 108 292 96z"/>
+    <path d="M288 52c176-16 312 102 312 248S464 550 288 550-16 446-16 300 112 68 288 52z"/>
+    <path d="M284 6c206-20 368 120 368 294S490 596 284 596-70 472-70 300 78 26 284 6z"/>
+  </svg>
+  <main>
+    <p class="k">Error 404 · no elevation data</p>
+    <h1>4<span>0</span>4</h1>
+    <p class="s">You've walked off the edge of the map.</p>
+    <code id="path">this page doesn't exist</code>
+    <nav>
+      <a class="p" href="/">Back to the site</a>
+      <a href="/card.html">Networking card</a>
+    </nav>
   </main>
   <script>
-    (function () {
-      var path = location.pathname || "/";
-      var shown;
-      try { shown = decodeURIComponent(path); } catch (e) { shown = path; }
-      if (shown.length > 120) shown = shown.slice(0, 117) + "...";
-      ["path", "cmd-path", "seg-path", "bar-path"].forEach(function (id) {
-        var el = document.getElementById(id);
-        if (el) el.textContent = shown;
-      });
-
-      // Site root: "/" on a custom domain, "/<repo>/" on a github.io project page.
-      var base = "/";
-      if (/\.github\.io$/i.test(location.hostname)) {
-        var seg = path.split("/")[1];
-        if (seg && seg.indexOf(".") === -1) base = "/" + seg + "/";
-      }
-      var links = { home: "", card: "card.html", v2: "v2/" };
-      Object.keys(links).forEach(function (id) {
-        var el = document.getElementById(id);
-        if (el) el.setAttribute("href", base + links[id]);
-      });
-    })();
+    document.getElementById("path").textContent = "no such page: " + location.pathname;
   </script>
 </body>
 </html>
